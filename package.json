@@ -1,17 +1,24 @@
 {
-  "name": "color-server",
+  "name": "conexion-1-100",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Juego web multijugador en tiempo real Conexión 1-100.",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "socket.io",
+    "express",
+    "multiplayer",
+    "game"
+  ],
   "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "license": "MIT",
   "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3"
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

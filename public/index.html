@@ -1,771 +1,225 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tarot Digital</title>
-
-<style>
-*{box-sizing:border-box;}
-
-body{
-    margin:0;
-    background:black;
-    color:white;
-    font-family:Arial, Helvetica, sans-serif;
-}
-
-#contenedor{
-    display:flex;
-    width:100%;
-    height:100vh;
-}
-
-#barra{
-    width:25%;
-    background:#111;
-    border-right:3px solid white;
-    overflow-y:auto;
-    padding:20px;
-}
-
-#barra h2{
-    font-size:34px;
-    text-align:center;
-    margin-top:0;
-}
-
-.item{
-    padding:12px;
-    font-size:22px;
-    border-bottom:1px solid #333;
-}
-
-#zona{
-    width:75%;
-    padding:20px;
-    text-align:center;
-    overflow-y:auto;
-}
-
-h1{
-    font-size:48px;
-    margin-top:0;
-}
-
-button{
-    background:white;
-    color:black;
-    border:none;
-    padding:14px 24px;
-    font-size:22px;
-    margin:6px;
-    border-radius:10px;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-button:hover{
-    background:#ddd;
-}
-
-#animacion img{
-    width:250px;
-}
-
-#cartas{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:20px;
-    margin-top:25px;
-}
-
-.carta{
-    width:180px;
-    background:#111;
-    border:3px solid white;
-    border-radius:12px;
-    padding:10px;
-    cursor:pointer;
-    transition:0.35s;
-    position:relative;
-}
-
-.carta.zoom{
-    transform:scale(2.2);
-    z-index:999;
-    box-shadow:0 0 30px white;
-}
-
-.carta img{
-    width:100%;
-    border-radius:10px;
-}
-
-.nombre{
-    font-size:22px;
-    margin-top:10px;
-    font-weight:bold;
-}
-
-#intuitivos{
-    margin-top:30px;
-    font-size:34px;
-    line-height:1.8;
-    letter-spacing:6px;
-    word-break:break-word;
-}
-
-/* PAGINA MANUAL */
-#manual{
-    display:none;
-    padding:40px;
-    text-align:center;
-}
-
-#manual h2{
-    font-size:46px;
-}
-
-#manualtexto{
-    font-size:30px;
-    margin-top:40px;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conexión 1-100</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-
-<!-- PAGINA PRINCIPAL -->
-<div id="contenedor">
-
-<div id="barra">
-<h2>TAROT DIGITAL</h2>
-<div id="listaCartas"></div>
-</div>
-
-<div id="zona">
-
-<h1>TAROT DIGITAL</h1>
-
-<button onclick="tirada(1)">1 CARTA</button>
-<button onclick="tirada(3)">3 CARTAS</button>
-<button onclick="tirada(5)">5 CARTAS</button>
-<button onclick="caracteres()">CARACTERES</button>
-<button onclick="abrirManual()">MANUAL</button>
-<button onclick="limpiar()">LIMPIAR</button>
-
-<div id="animacion"></div>
-<div id="cartas"></div>
-<div id="intuitivos"></div>
-
-</div>
-</div>
-
-<!-- PAGINA MANUAL -->
-<h2>MANUAL DEL ORÁCULO</h2>
-<div id="manual" style="
-max-width:1000px;
-margin:auto;
-text-align:left;
-font-size:28px;
-line-height:1.6;
-padding:20px;
-">
-
-<h2 style="text-align:center;font-size:54px;">MANUAL DEL ORÁCULO</h2>
-<h3 style="text-align:center;font-size:42px;">TAROT DIGITAL</h3>
-
-<p style="text-align:center;">
-Guía inicial para interpretar pasado, presente, futuro y caminos ocultos
-</p>
-
-<hr>
-
-<h3>INTRODUCCIÓN</h3>
-
-<p>
-El Tarot Digital es un sistema simbólico de 40 cartas diseñado para revelar
-energías visibles e invisibles que rodean una situación.
-</p>
-
-<p>Cada carta habla mediante:</p>
-
-<ul>
-<li>Símbolo</li>
-<li>Emoción</li>
-<li>Dirección energética</li>
-<li>Advertencia</li>
-<li>Oportunidad</li>
-<li>Intuición del lector</li>
-</ul>
-
-<h3>REGLA PRINCIPAL DEL LECTOR</h3>
-
-<p>No leas solo significados memorizados.</p>
-
-<p><b>Siente la carta.</b></p>
-
-<p>Observa:</p>
-
-<ul>
-<li>¿Te incomoda?</li>
-<li>¿Te da paz?</li>
-<li>¿Parece advertencia?</li>
-<li>¿Parece promesa?</li>
-<li>¿Atrae o rechaza?</li>
-</ul>
-
-<p>Tu intuición completa la lectura.</p>
-
-<hr>
-
-<h3>CÓMO LEER UNA CARTA</h3>
-
-<h4>Carta derecha</h4>
-<p>La energía fluye normalmente.</p>
-
-<h4>Carta invertida</h4>
-
-<p>Puede significar:</p>
-
-<ul>
-<li>Bloqueo</li>
-<li>Retraso</li>
-<li>Exceso</li>
-<li>Energía interna</li>
-<li>Negación</li>
-<li>Sombra oculta</li>
-</ul>
-
-<p>No siempre es negativa.</p>
-
-<hr>
-
-<h3>LAS 40 CARTAS</h3>
-
-<p><b>1. El Portal</b><br>
-Derecha: oportunidad nueva, entrada, destino abierto.<br>
-Invertida: puerta cerrada, miedo al cambio.</p>
-
-<p><b>2. La Sombra</b><br>
-Derecha: secretos, intuición profunda, verdad oculta.<br>
-Invertida: engaño, autoengaño, confusión.</p>
-
-<p><b>3. El Testigo</b><br>
-Derecha: observar antes de actuar.<br>
-Invertida: pasividad excesiva.</p>
-
-<p><b>4. La Herida</b><br>
-Derecha: dolor que enseña.<br>
-Invertida: trauma no sanado.</p>
-
-<p><b>5. El Camino</b><br>
-Derecha: avance, viaje, progreso.<br>
-Invertida: estancamiento.</p>
-
-<p><b>6. La Ruptura</b><br>
-Derecha: final necesario.<br>
-Invertida: apego al pasado.</p>
-
-<p><b>7. El Eco</b><br>
-Derecha: consecuencias regresan.<br>
-Invertida: mensaje ignorado.</p>
-
-<p><b>8. La Llama</b><br>
-Derecha: pasión, fuerza vital.<br>
-Invertida: agotamiento, ira.</p>
-
-<p><b>9. El Vacío</b><br>
-Derecha: pausa fértil, silencio creador.<br>
-Invertida: soledad dolorosa.</p>
-
-<p><b>10. La Máscara</b><br>
-Derecha: apariencias, estrategia.<br>
-Invertida: mentira revelada.</p>
-
-<p><b>11. El Impulso</b><br>
-Derecha: acción inmediata.<br>
-Invertida: imprudencia.</p>
-
-<p><b>12. La Niebla</b><br>
-Derecha: falta de claridad.<br>
-Invertida: verdad emerge.</p>
-
-<p><b>13. El Peso</b><br>
-Derecha: responsabilidad.<br>
-Invertida: cargas innecesarias.</p>
-
-<p><b>14. La Alianza</b><br>
-Derecha: unión útil.<br>
-Invertida: traición.</p>
-
-<p><b>15. El Rastro</b><br>
-Derecha: pistas visibles.<br>
-Invertida: señales falsas.</p>
-
-<p><b>16. La Caída</b><br>
-Derecha: golpe que despierta.<br>
-Invertida: caída evitada.</p>
-
-<p><b>17. El Brote</b><br>
-Derecha: nacimiento, inicio.<br>
-Invertida: crecimiento lento.</p>
-
-<p><b>18. La Marea</b><br>
-Derecha: emociones fuertes.<br>
-Invertida: represión emocional.</p>
-
-<p><b>19. El Umbral</b><br>
-Derecha: decisión cercana.<br>
-Invertida: temor a cruzar.</p>
-
-<p><b>20. La Fractura</b><br>
-Derecha: división profunda.<br>
-Invertida: reparación posible.</p>
-
-<p><b>21. El Hilo</b><br>
-Derecha: conexión invisible.<br>
-Invertida: vínculo roto.</p>
-
-<p><b>22. La Tormenta</b><br>
-Derecha: caos temporal.<br>
-Invertida: calma después.</p>
-
-<p><b>23. El Doble</b><br>
-Derecha: dualidad, reflejo.<br>
-Invertida: conflicto interno.</p>
-
-<p><b>24. La Semilla</b><br>
-Derecha: futuro sembrado hoy.<br>
-Invertida: potencial desperdiciado.</p>
-
-<p><b>25. El Reloj</b><br>
-Derecha: tiempo exacto.<br>
-Invertida: retrasos.</p>
-
-<p><b>26. La Desviación</b><br>
-Derecha: cambio de ruta necesario.<br>
-Invertida: perderse.</p>
-
-<p><b>27. El Ojo</b><br>
-Derecha: percepción superior.<br>
-Invertida: ceguera voluntaria.</p>
-
-<p><b>28. La Tensión</b><br>
-Derecha: presión acumulada.<br>
-Invertida: liberación.</p>
-
-<p><b>29. El Ciclo</b><br>
-Derecha: repetición útil.<br>
-Invertida: patrón tóxico.</p>
-
-<p><b>30. La Dirección</b><br>
-Derecha: rumbo claro.<br>
-Invertida: indecisión.</p>
-
-<p><b>31. El Silencio</b><br>
-Derecha: esperar.<br>
-Invertida: hablar ya.</p>
-
-<p><b>32. La Invasión</b><br>
-Derecha: energía externa entra.<br>
-Invertida: límites recuperados.</p>
-
-<p><b>33. El Desborde</b><br>
-Derecha: exceso emocional/material.<br>
-Invertida: control regresa.</p>
-
-<p><b>34. La Forma</b><br>
-Derecha: estructura útil.<br>
-Invertida: rigidez.</p>
-
-<p><b>35. El Nudo</b><br>
-Derecha: problema complejo.<br>
-Invertida: solución cercana.</p>
-
-<p><b>36. La Alineación</b><br>
-Derecha: todo coopera.<br>
-Invertida: desorden energético.</p>
-
-<p><b>37. El Corte</b><br>
-Derecha: decisión firme.<br>
-Invertida: indecisión prolongada.</p>
-
-<p><b>38. La Memoria</b><br>
-Derecha: pasado importante.<br>
-Invertida: nostalgia dañina.</p>
-
-<p><b>39. El Horizonte</b><br>
-Derecha: expansión futura.<br>
-Invertida: visión limitada.</p>
-
-<p><b>40. La Revelación</b><br>
-Derecha: verdad total.<br>
-Invertida: verdad parcial.</p>
-
-<hr>
-
-<h3>CÓMO MEZCLAR</h3>
-
-<ol>
-<li>Piensa la pregunta.</li>
-<li>Respira.</li>
-<li>Mezcla concentrado.</li>
-<li>Corta el mazo.</li>
-<li>Extrae cartas.</li>
-</ol>
-
-<hr>
-
-<h3>TIRADAS</h3>
-
-<h4>Tirada de 1 Carta</h4>
-<p>
-Para respuestas rápidas.<br>
-¿Debo hacerlo?<br>
-¿Qué energía hay hoy?
-</p>
-
-<h4>Tirada de 3 Cartas</h4>
-<p>
-Pasado – Presente – Futuro
-</p>
-
-<ul>
-<li>Carta 1 = origen</li>
-<li>Carta 2 = ahora</li>
-<li>Carta 3 = hacia dónde va</li>
-</ul>
-
-<h4>Tirada de 5 Cartas</h4>
-
-<ul>
-<li>1 Centro actual</li>
-<li>2 Lo que ayuda</li>
-<li>3 Lo que bloquea</li>
-<li>4 Futuro cercano</li>
-<li>5 Consejo final</li>
-</ul>
-
-<hr>
-
-<h3>COMBINACIONES</h3>
-
-<p><b>La Niebla + El Ojo</b><br>
-Confusión que será aclarada.</p>
-
-<p><b>La Ruptura + El Brote</b><br>
-Final que trae inicio mejor.</p>
-
-<p><b>La Máscara + La Revelación</b><br>
-Mentira descubierta.</p>
-
-<hr>
-
-<h3>CONSEJO AL LECTOR PRINCIPIANTE</h3>
-
-<p>
-No temas equivocarte.
-</p>
-
-<p>
-El oráculo habla en símbolos. Mientras más practiques:
-</p>
-
-<ul>
-<li>Más sentirás patrones</li>
-<li>Más verás conexiones</li>
-<li>Más precisa será tu lectura</li>
-</ul>
-
-<hr>
-
-<h3>REGLA DE ORO</h3>
-
-<p>
-La carta muestra energía probable.<br>
-La voluntad humana aún puede cambiar el destino.
-</p>
-
-</div>
-<br><br>
-
-<button onclick="cerrarManual()">REGRESAR</button>
-
-</div>
-
-<script>
-
-const nombres = [
-"El Portal","La Sombra","El Testigo","La Herida","El Camino",
-"La Ruptura","El Eco","La Llama","El Vacío","La Máscara",
-"El Impulso","La Niebla","El Peso","La Alianza","El Rastro",
-"La Caída","El Brote","La Marea","El Umbral","La Fractura",
-"El Hilo","La Tormenta","El Doble","La Semilla","El Reloj",
-"La Desviación","El Ojo","La Tensión","El Ciclo","La Dirección",
-"El Silencio","La Invasión","El Desborde","La Forma","El Nudo",
-"La Alineación","El Corte","La Memoria","El Horizonte","La Revelación"
-];
-
-let lista=document.getElementById("listaCartas");
-
-lista.innerHTML = `
-
-<div class="item"><b>GUÍA DE CARTAS</b></div>
-
-<div class="item"><b>1. El Portal</b><br>
-Derecha: oportunidad nueva.<br>
-Reversa: puerta cerrada.</div>
-
-<div class="item"><b>2. La Sombra</b><br>
-Derecha: secretos e intuición.<br>
-Reversa: engaño.</div>
-
-<div class="item"><b>3. El Testigo</b><br>
-Derecha: observar.<br>
-Reversa: pasividad.</div>
-
-<div class="item"><b>4. La Herida</b><br>
-Derecha: dolor que enseña.<br>
-Reversa: trauma abierto.</div>
-
-<div class="item"><b>5. El Camino</b><br>
-Derecha: avance.<br>
-Reversa: estancamiento.</div>
-
-<div class="item"><b>6. La Ruptura</b><br>
-Derecha: final necesario.<br>
-Reversa: apego.</div>
-
-<div class="item"><b>7. El Eco</b><br>
-Derecha: consecuencias vuelven.<br>
-Reversa: aviso ignorado.</div>
-
-<div class="item"><b>8. La Llama</b><br>
-Derecha: pasión.<br>
-Reversa: desgaste.</div>
-
-<div class="item"><b>9. El Vacío</b><br>
-Derecha: pausa fértil.<br>
-Reversa: soledad.</div>
-
-<div class="item"><b>10. La Máscara</b><br>
-Derecha: apariencias.<br>
-Reversa: mentira revelada.</div>
-
-<div class="item"><b>11. El Impulso</b><br>
-Derecha: acción inmediata.<br>
-Reversa: imprudencia.</div>
-
-<div class="item"><b>12. La Niebla</b><br>
-Derecha: confusión.<br>
-Reversa: claridad llega.</div>
-
-<div class="item"><b>13. El Peso</b><br>
-Derecha: responsabilidad.<br>
-Reversa: carga innecesaria.</div>
-
-<div class="item"><b>14. La Alianza</b><br>
-Derecha: unión útil.<br>
-Reversa: traición.</div>
-
-<div class="item"><b>15. El Rastro</b><br>
-Derecha: pistas visibles.<br>
-Reversa: señales falsas.</div>
-
-<div class="item"><b>16. La Caída</b><br>
-Derecha: golpe que despierta.<br>
-Reversa: caída evitada.</div>
-
-<div class="item"><b>17. El Brote</b><br>
-Derecha: nacimiento.<br>
-Reversa: crecimiento lento.</div>
-
-<div class="item"><b>18. La Marea</b><br>
-Derecha: emociones fuertes.<br>
-Reversa: represión emocional.</div>
-
-<div class="item"><b>19. El Umbral</b><br>
-Derecha: decisión cercana.<br>
-Reversa: miedo a cruzar.</div>
-
-<div class="item"><b>20. La Fractura</b><br>
-Derecha: división.<br>
-Reversa: reparación.</div>
-
-<div class="item"><b>21. El Hilo</b><br>
-Derecha: conexión invisible.<br>
-Reversa: vínculo roto.</div>
-
-<div class="item"><b>22. La Tormenta</b><br>
-Derecha: caos temporal.<br>
-Reversa: calma después.</div>
-
-<div class="item"><b>23. El Doble</b><br>
-Derecha: dualidad.<br>
-Reversa: conflicto interno.</div>
-
-<div class="item"><b>24. La Semilla</b><br>
-Derecha: potencial futuro.<br>
-Reversa: oportunidad perdida.</div>
-
-<div class="item"><b>25. El Reloj</b><br>
-Derecha: tiempo exacto.<br>
-Reversa: retrasos.</div>
-
-<div class="item"><b>26. La Desviación</b><br>
-Derecha: cambio de ruta.<br>
-Reversa: perderse.</div>
-
-<div class="item"><b>27. El Ojo</b><br>
-Derecha: percepción superior.<br>
-Reversa: ceguera voluntaria.</div>
-
-<div class="item"><b>28. La Tensión</b><br>
-Derecha: presión acumulada.<br>
-Reversa: liberación.</div>
-
-<div class="item"><b>29. El Ciclo</b><br>
-Derecha: repetición útil.<br>
-Reversa: patrón tóxico.</div>
-
-<div class="item"><b>30. La Dirección</b><br>
-Derecha: rumbo claro.<br>
-Reversa: indecisión.</div>
-
-<div class="item"><b>31. El Silencio</b><br>
-Derecha: esperar.<br>
-Reversa: hablar ya.</div>
-
-<div class="item"><b>32. La Invasión</b><br>
-Derecha: influencia externa.<br>
-Reversa: límites recuperados.</div>
-
-<div class="item"><b>33. El Desborde</b><br>
-Derecha: exceso.<br>
-Reversa: control regresa.</div>
-
-<div class="item"><b>34. La Forma</b><br>
-Derecha: estructura útil.<br>
-Reversa: rigidez.</div>
-
-<div class="item"><b>35. El Nudo</b><br>
-Derecha: problema complejo.<br>
-Reversa: solución cerca.</div>
-
-<div class="item"><b>36. La Alineación</b><br>
-Derecha: todo coopera.<br>
-Reversa: desorden.</div>
-
-<div class="item"><b>37. El Corte</b><br>
-Derecha: decisión firme.<br>
-Reversa: indecisión larga.</div>
-
-<div class="item"><b>38. La Memoria</b><br>
-Derecha: pasado importante.<br>
-Reversa: nostalgia dañina.</div>
-
-<div class="item"><b>39. El Horizonte</b><br>
-Derecha: expansión futura.<br>
-Reversa: visión limitada.</div>
-
-<div class="item"><b>40. La Revelación</b><br>
-Derecha: verdad total.<br>
-Reversa: verdad parcial.</div>
-
-`;
-function limpiar(){
-
-    document.getElementById("cartas").innerHTML="";
-    document.getElementById("animacion").innerHTML="";
-    document.getElementById("intuitivos").innerHTML="";
-}
-
-function randomSinRepetir(cantidad){
-
-    let arr=[];
-
-    while(arr.length<cantidad){
-
-        let n=Math.floor(Math.random()*40)+1;
-
-        if(!arr.includes(n)) arr.push(n);
-    }
-
-    return arr;
-}
-
-function tirada(cantidad){
-
-    limpiar();
-
-    document.getElementById("animacion").innerHTML =
-    '<img src="animacion.gif">';
-
-    setTimeout(()=>{
-
-        document.getElementById("animacion").innerHTML="";
-
-        let nums=randomSinRepetir(cantidad);
-
-        nums.forEach(n=>{
-
-            let invertida=Math.random()<0.5;
-
-            let estilo=invertida ?
-            "transform:rotate(180deg);" : "";
-
-            let div=document.createElement("div");
-            div.className="carta";
-
-            div.innerHTML=`
-                <img src="carta${n}.jpg" style="${estilo}">
-                <div class="nombre">${nombres[n-1]}</div>
-            `;
-
-            div.onclick=function(){
-                div.classList.toggle("zoom");
-            };
-
-            document.getElementById("cartas").appendChild(div);
-        });
-
-    },3000);
-}
-
-function caracteres(){
-
-    limpiar();
-
-    const pool="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*ΩΨΔЖ☉☾⚡∞";
-    let txt="";
-
-    for(let i=0;i<60;i++){
-
-        txt+=pool[Math.floor(Math.random()*pool.length)]+" ";
-
-        if((i+1)%10==0) txt+="<br>";
-    }
-
-    document.getElementById("intuitivos").innerHTML=txt;
-}
-
-/* MANUAL */
-
-function abrirManual(){
-
-    document.getElementById("contenedor").style.display="none";
-    document.getElementById("manual").style.display="block";
-}
-
-function cerrarManual(){
-
-    document.getElementById("manual").style.display="none";
-    document.getElementById("contenedor").style.display="flex";
-}
-
-</script>
-
+  <div class="ambient-line"></div>
+  <div class="app-shell">
+    <section id="menuView" class="view active">
+      <main class="home">
+        <header class="brand-header">
+          <div>
+            <p class="eyebrow">Experiencia multijugador privada</p>
+            <h1>Conexión 1-100</h1>
+          </div>
+          <button id="quickCreateBtn" class="primary-btn">Crear sala</button>
+        </header>
+
+        <section class="home-hero">
+          <div class="hero-statement">
+            <span class="luxury-mark">1-100</span>
+            <h2>Una lectura elegante de intuición compartida.</h2>
+            <p>Dos jugadores eligen números secretos y tratan de sentir la cifra del otro. El resultado no declara ganadores: revela un porcentaje de conexión telepática.</p>
+          </div>
+          <div class="signature-panel">
+            <p>Sesiones privadas</p>
+            <strong>6 salas</strong>
+            <span>Códigos cortos, espectadores en vivo y rondas sincronizadas por Socket.IO.</span>
+          </div>
+        </section>
+
+        <nav class="main-menu" aria-label="Menú principal">
+          <button class="menu-tile" data-target="info">
+            <span>Información</span>
+            <strong>Cómo funciona</strong>
+            <small>Reglas, turnos y conexión final.</small>
+          </button>
+          <button class="menu-tile" data-target="rooms">
+            <span>Salas</span>
+            <strong>Ver salas</strong>
+            <small>Estado en vivo de las 6 salas.</small>
+          </button>
+          <button class="menu-tile" data-target="observer">
+            <span>Observador</span>
+            <strong>Mirar partida</strong>
+            <small>Entra solo a ver con una clave.</small>
+          </button>
+          <button class="menu-tile" data-target="join">
+            <span>Tengo un código</span>
+            <strong>Entrar a jugar</strong>
+            <small>Únete como jugador o espectador si está llena.</small>
+          </button>
+        </nav>
+      </main>
+    </section>
+
+    <section id="infoView" class="view">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Información</p>
+          <h2>Una conexión, no una competencia</h2>
+        </div>
+        <button class="ghost-btn back-menu">Regresar al menú</button>
+      </header>
+      <main class="content-grid">
+        <article class="feature-card">
+          <span>01</span>
+          <h3>Números secretos</h3>
+          <p>Cada jugador elige un número del 1 al 100. La sala espera hasta que ambos lo hayan guardado.</p>
+        </article>
+        <article class="feature-card">
+          <span>02</span>
+          <h3>Turnos claros</h3>
+          <p>Primero intuye Jugador 1, luego Jugador 2. Nadie puede actuar fuera de su turno.</p>
+        </article>
+        <article class="feature-card">
+          <span>03</span>
+          <h3>Porcentaje final</h3>
+          <p>La precisión se calcula por cercanía. El promedio de ambos crea la conexión telepática total.</p>
+        </article>
+      </main>
+    </section>
+
+    <section id="joinView" class="view">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Acceso privado</p>
+          <h2>Tengo un código</h2>
+        </div>
+        <button class="ghost-btn back-menu">Regresar al menú</button>
+      </header>
+      <main class="access-layout">
+        <section class="access-card">
+          <h3>Entrar a jugar</h3>
+          <p>Si la sala tiene un lugar disponible, entrarás como segundo jugador. Si ya está completa, entrarás como espectador.</p>
+          <form id="codeForm" class="code-form">
+            <label for="roomCode">Clave de sala</label>
+            <div class="inline-form">
+              <input id="roomCode" maxlength="4" autocomplete="off" placeholder="A7K2">
+              <button class="small-btn" type="submit">Entrar</button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </section>
+
+    <section id="observerView" class="view">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Modo observador</p>
+          <h2>Mirar una sala</h2>
+        </div>
+        <button class="ghost-btn back-menu">Regresar al menú</button>
+      </header>
+      <main class="access-layout">
+        <section class="access-card observer-card">
+          <h3>Entrar solo a observar</h3>
+          <p>Verás números elegidos, intuiciones, precisión, fase actual y espectadores conectados, sin modificar la partida.</p>
+          <form id="observerForm" class="code-form">
+            <label for="observerCode">Clave de sala</label>
+            <div class="inline-form">
+              <input id="observerCode" maxlength="4" autocomplete="off" placeholder="A7K2">
+              <button class="small-btn" type="submit">Observar</button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </section>
+
+    <section id="roomsView" class="view">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Salas</p>
+          <h2>Estado en tiempo real</h2>
+        </div>
+        <button class="ghost-btn back-menu">Regresar al menú</button>
+      </header>
+      <div id="roomsGrid" class="rooms-grid"></div>
+    </section>
+
+    <section id="gameView" class="view">
+      <header class="topbar game-topbar">
+        <div>
+          <p id="roleBadge" class="role-badge">Conectando</p>
+          <h2 id="roomTitle">Sala</h2>
+          <p id="roomCodeText" class="code-line"></p>
+        </div>
+        <div class="top-actions">
+          <button id="backMenuBtn" class="ghost-btn">Regresar al menú</button>
+          <button id="leaveBtn" class="danger-btn">Salir de sesión</button>
+        </div>
+      </header>
+
+      <main class="game-layout">
+        <section class="game-stage">
+          <div class="phase-card main-phase">
+            <p class="eyebrow">Fase actual</p>
+            <h3 id="phaseTitle">Esperando</h3>
+            <p id="phaseText">Preparando la sala.</p>
+          </div>
+
+          <div id="hostNotice" class="host-notice hidden"></div>
+
+          <div id="playerControls" class="action-card">
+            <form id="secretForm" class="game-form hidden">
+              <label for="secretNumber">Tu número secreto</label>
+              <div class="inline-form">
+                <input id="secretNumber" type="number" min="1" max="100" placeholder="1-100">
+                <button class="small-btn" type="submit">Guardar</button>
+              </div>
+            </form>
+
+            <form id="guessForm" class="game-form hidden">
+              <label for="guessNumber">Tu intuición sobre el otro número</label>
+              <div class="inline-form">
+                <input id="guessNumber" type="number" min="1" max="100" placeholder="1-100">
+                <button class="small-btn" type="submit">Enviar</button>
+              </div>
+            </form>
+
+            <div id="spectatorMessage" class="spectator-message hidden">Estás mirando como observador. La sala se actualiza en tiempo real.</div>
+          </div>
+
+          <div id="resultPanel" class="result-panel hidden">
+            <p class="eyebrow">Resultado místico</p>
+            <h3 id="totalConnection">0%</h3>
+            <div id="scoreRows" class="score-rows"></div>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <div class="players-card">
+            <div class="panel-heading">
+              <h3>Participantes</h3>
+              <span id="spectatorCount">0 espectadores</span>
+            </div>
+            <div id="playersList" class="players-list"></div>
+          </div>
+
+          <div id="hostControls" class="host-controls hidden">
+            <button id="newRoundBtn" class="primary-btn">Iniciar nueva ronda</button>
+            <button id="resetBtn" class="secondary-btn">Reiniciar sala</button>
+          </div>
+
+          <div class="log-card">
+            <h3>Actividad</h3>
+            <div id="activityLog" class="activity-log"></div>
+          </div>
+        </aside>
+      </main>
+    </section>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/client.js"></script>
 </body>
 </html>
