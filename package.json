@@ -1,24 +1,13 @@
 {
-  "name": "conexion-1-100",
+  "name": "dice-21-multiplayer",
   "version": "1.0.0",
-  "description": "Juego web multijugador en tiempo real Conexión 1-100.",
+  "description": "A real-time two-player dice game built with Node.js, Express, and Socket.IO.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "keywords": [
-    "socket.io",
-    "express",
-    "multiplayer",
-    "game"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "^4.18.3",
     "socket.io": "^4.7.5"
-  },
-  "engines": {
-    "node": ">=18"
   }
 }

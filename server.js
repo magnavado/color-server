@@ -1,386 +1,325 @@
 const express = require("express");
 const http = require("http");
-const { Server } = require("socket.io");
 const path = require("path");
+const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const MAX_ROOMS = 6;
+const ROOM_ID = "roulette-room";
+const ADMIN_CODE = "456";
+const MAX_CODES = 10;
+const COLORS = [
+  { id: "cafe", label: "Cafe", hex: "#8b5a2b" },
+  { id: "verde", label: "Verde", hex: "#39b56a" },
+  { id: "amarillo", label: "Amarillo", hex: "#f4c95d" },
+  { id: "rojo", label: "Rojo", hex: "#e84d4f" },
+  { id: "naranja", label: "Naranja", hex: "#f08a24" },
+  { id: "azul", label: "Azul", hex: "#3c7cff" }
+];
 
 app.use(express.static(path.join(__dirname, "public")));
 
-const rooms = Array.from({ length: MAX_ROOMS }, (_, index) => createEmptyRoom(index + 1));
-const socketSessions = new Map();
+const state = {
+  adminId: null,
+  adminName: "",
+  accessCodes: [],
+  players: [],
+  chat: [],
+  chatEnabled: true,
+  roundActive: false,
+  spinning: false,
+  winningColor: null,
+  roundMessage: "Esperando al admin.",
+  roundNumber: 0
+};
 
-function createEmptyRoom(number) {
-  return {
-    number,
-    code: null,
-    players: [],
-    spectators: [],
-    hostId: null,
-    phase: "libre",
-    currentTurn: null,
-    secrets: {},
-    guesses: {},
-    scores: null,
-    log: []
-  };
+function cleanName(value, fallback) {
+  const name = String(value || "").trim().slice(0, 18);
+  return name || fallback;
 }
 
 function generateCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
   do {
-    code = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  } while (rooms.some((room) => room.code === code));
+    code = String(Math.floor(1000 + Math.random() * 9000));
+  } while (code === ADMIN_CODE || state.accessCodes.some((item) => item.code === code));
   return code;
 }
 
-function roomStatus(room) {
-  if (!room.code || room.players.length === 0) return "libre";
-  if (room.players.length === 1) return "esperando jugador";
-  return "en juego";
-}
-
-function playerLabel(room, socketId) {
-  const index = room.players.indexOf(socketId);
-  if (index === -1) return "Espectador";
-  return `Jugador ${index + 1}`;
-}
-
-function addLog(room, message) {
-  room.log.unshift({
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    message,
-    time: new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
-  });
-  room.log = room.log.slice(0, 12);
-}
-
-function publicRooms() {
-  return rooms.map((room) => ({
-    number: room.number,
-    status: roomStatus(room),
-    players: room.players.length,
-    spectators: room.spectators.length,
-    hasCode: Boolean(room.code)
+function resetCodes() {
+  state.accessCodes = Array.from({ length: MAX_CODES }, (_, index) => ({
+    code: generateCode(),
+    usedBy: null,
+    slot: index + 1
   }));
 }
 
-function publicRoom(room) {
+function publicPlayer(player) {
   return {
-    number: room.number,
-    code: room.code,
-    hostId: room.hostId,
-    phase: room.phase,
-    currentTurn: room.currentTurn,
-    players: room.players.map((id, index) => ({
-      id,
-      label: `Jugador ${index + 1}`,
-      isHost: id === room.hostId,
-      connected: true,
-      selectedNumber: room.secrets[id] ?? null,
-      guess: room.guesses[id] ?? null,
-      accuracy: room.scores?.players[id] ?? null
-    })),
-    spectatorsCount: room.spectators.length,
-    scores: room.scores,
-    log: room.log,
-    status: roomStatus(room)
+    id: player.id,
+    nickname: player.nickname,
+    code: player.code,
+    choice: player.choice,
+    muted: player.muted
   };
 }
 
-function emitRooms() {
-  io.emit("rooms:update", publicRooms());
+function publicState() {
+  return {
+    adminConnected: Boolean(state.adminId),
+    adminName: state.adminName,
+    players: state.players.map(publicPlayer),
+    colors: COLORS,
+    chat: state.chat,
+    chatEnabled: state.chatEnabled,
+    roundActive: state.roundActive,
+    spinning: state.spinning,
+    winningColor: state.winningColor,
+    roundMessage: state.roundMessage,
+    roundNumber: state.roundNumber
+  };
 }
 
-function emitRoom(room) {
-  io.to(`room-${room.number}`).emit("room:update", publicRoom(room));
-  emitRooms();
+function adminState() {
+  return {
+    accessCodes: state.accessCodes,
+    players: state.players.map(publicPlayer),
+    chatEnabled: state.chatEnabled
+  };
 }
 
-function resetGame(room, keepPlayers = true) {
-  room.phase = room.players.length === 2 ? "listos" : room.players.length === 1 ? "esperando" : "libre";
-  room.currentTurn = null;
-  room.secrets = {};
-  room.guesses = {};
-  room.scores = null;
-  if (!keepPlayers && room.players.length === 0) {
-    room.code = null;
-    room.hostId = null;
-    room.log = [];
-  }
+function emitState() {
+  io.to(ROOM_ID).emit("gameState", publicState());
+  if (state.adminId) io.to(state.adminId).emit("adminState", adminState());
 }
 
-function clearRoomIfEmpty(room) {
-  if (room.players.length === 0) {
-    room.code = null;
-    room.hostId = null;
-    room.phase = "libre";
-    room.currentTurn = null;
-    room.secrets = {};
-    room.guesses = {};
-    room.scores = null;
-    room.log = [];
-  }
-}
+function addChat(sender, message, system = false) {
+  const cleanMessage = String(message || "").trim().slice(0, 240);
+  if (!cleanMessage) return false;
 
-function leaveCurrentRoom(socket, silent = false) {
-  const session = socketSessions.get(socket.id);
-  if (!session) return;
-
-  const room = rooms.find((item) => item.number === session.roomNumber);
-  if (!room) {
-    socketSessions.delete(socket.id);
-    return;
-  }
-
-  socket.leave(`room-${room.number}`);
-
-  if (session.role === "spectator") {
-    room.spectators = room.spectators.filter((id) => id !== socket.id);
-  } else {
-    const wasHost = room.hostId === socket.id;
-    room.players = room.players.filter((id) => id !== socket.id);
-    delete room.secrets[socket.id];
-    delete room.guesses[socket.id];
-    if (room.scores?.players) delete room.scores.players[socket.id];
-
-    if (wasHost) {
-      room.hostId = room.players[0] || null;
-      if (room.hostId) addLog(room, "El anfitrion salio. El control de sala paso al jugador restante.");
-    }
-
-    if (!silent) addLog(room, `${session.label} salio de la sala.`);
-    if (room.players.length < 2 && room.players.length > 0) resetGame(room);
-    clearRoomIfEmpty(room);
-  }
-
-  socketSessions.delete(socket.id);
-  emitRoom(room);
-}
-
-function joinRoom(socket, room, role) {
-  socket.join(`room-${room.number}`);
-  const label = role === "spectator" ? "Espectador" : `Jugador ${room.players.length}`;
-  socketSessions.set(socket.id, { roomNumber: room.number, role, label });
-  socket.emit("session:joined", {
-    room: publicRoom(room),
-    me: {
-      id: socket.id,
-      role,
-      label,
-      isHost: room.hostId === socket.id
-    }
+  state.chat.unshift({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    sender,
+    message: cleanMessage,
+    system,
+    time: new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
   });
-  emitRoom(room);
+  state.chat = state.chat.slice(0, 80);
+  return true;
 }
 
-function calculateScores(room) {
-  const [playerOne, playerTwo] = room.players;
-  const playerOneAccuracy = Math.max(0, 100 - Math.abs(room.secrets[playerTwo] - room.guesses[playerOne]));
-  const playerTwoAccuracy = Math.max(0, 100 - Math.abs(room.secrets[playerOne] - room.guesses[playerTwo]));
-  const total = Math.round((playerOneAccuracy + playerTwoAccuracy) / 2);
-
-  room.scores = {
-    players: {
-      [playerOne]: playerOneAccuracy,
-      [playerTwo]: playerTwoAccuracy
-    },
-    total
-  };
+function findPlayer(socketId) {
+  return state.players.find((player) => player.id === socketId);
 }
 
-function assertPlayerTurn(socket, room) {
-  const session = socketSessions.get(socket.id);
-  if (!session || session.role !== "player") return "Solo los jugadores pueden realizar esta accion.";
-  if (!room.players.includes(socket.id)) return "No perteneces a esta sala como jugador.";
-  if (room.currentTurn && room.currentTurn !== socket.id) return "Aun no es tu turno.";
-  return null;
+function requireAdmin(socket) {
+  if (socket.id !== state.adminId) {
+    socket.emit("errorMessage", "Solo el admin puede hacer eso.");
+    return false;
+  }
+  return true;
+}
+
+function startNewAdminSession(socket, nickname) {
+  state.adminId = socket.id;
+  state.adminName = cleanName(nickname, "Admin");
+  state.accessCodes = [];
+  state.players = [];
+  state.chat = [];
+  state.chatEnabled = true;
+  state.roundActive = false;
+  state.spinning = false;
+  state.winningColor = null;
+  state.roundMessage = `${state.adminName} conecto como admin. Comparte los codigos con los jugadores.`;
+  state.roundNumber = 0;
+  resetCodes();
+  addChat("Sistema", state.roundMessage, true);
+}
+
+function resetChoicesForRound() {
+  state.players.forEach((player) => {
+    player.choice = null;
+  });
 }
 
 io.on("connection", (socket) => {
-  socket.emit("rooms:update", publicRooms());
+  socket.emit("gameState", publicState());
 
-  socket.on("room:create", () => {
-    leaveCurrentRoom(socket, true);
-    const room = rooms.find((item) => item.players.length === 0 && !item.code);
-
-    if (!room) {
-      socket.emit("app:error", "Todas las salas estan ocupadas. Intentalo de nuevo en unos minutos.");
-      emitRooms();
+  socket.on("adminLogin", ({ code, nickname }) => {
+    if (String(code || "").trim() !== ADMIN_CODE) {
+      socket.emit("errorMessage", "Codigo de admin incorrecto.");
       return;
     }
 
-    room.code = generateCode();
-    room.players = [socket.id];
-    room.spectators = [];
-    room.hostId = socket.id;
-    room.phase = "esperando";
-    room.currentTurn = null;
-    room.secrets = {};
-    room.guesses = {};
-    room.scores = null;
-    room.log = [];
-    addLog(room, "Sala creada. Esperando al segundo jugador.");
-    joinRoom(socket, room, "player");
+    if (state.adminId && state.adminId !== socket.id) {
+      socket.emit("errorMessage", "Ya hay un admin conectado.");
+      return;
+    }
+
+    socket.join(ROOM_ID);
+    startNewAdminSession(socket, nickname);
+    socket.emit("sessionAssigned", { id: socket.id, role: "admin", nickname: state.adminName });
+    emitState();
   });
 
-  socket.on("room:join", (rawCode) => {
-    leaveCurrentRoom(socket, true);
-    const code = String(rawCode || "").trim().toUpperCase();
-    const room = rooms.find((item) => item.code === code);
+  socket.on("playerJoin", ({ code, nickname }) => {
+    const cleanCode = String(code || "").trim();
+    const access = state.accessCodes.find((item) => item.code === cleanCode);
 
-    if (!room) {
-      socket.emit("app:error", "La clave no corresponde a ninguna sala activa.");
+    if (!state.adminId) {
+      socket.emit("errorMessage", "Primero debe entrar el admin.");
       return;
     }
-
-    if (room.players.length < 2) {
-      room.players.push(socket.id);
-      room.phase = "listos";
-      addLog(room, `${playerLabel(room, socket.id)} entro a la sala.`);
-      joinRoom(socket, room, "player");
+    if (!access) {
+      socket.emit("errorMessage", "Codigo incorrecto.");
       return;
     }
+    if (access.usedBy && access.usedBy !== socket.id) {
+      socket.emit("errorMessage", "Ese codigo ya fue usado.");
+      return;
+    }
+    if (state.players.some((player) => player.id === socket.id)) return;
 
-    room.spectators.push(socket.id);
-    addLog(room, "Un espectador se unio a la transmision.");
-    joinRoom(socket, room, "spectator");
+    const player = {
+      id: socket.id,
+      nickname: cleanName(nickname, `Jugador ${state.players.length + 1}`),
+      code: cleanCode,
+      choice: null,
+      muted: false
+    };
+    access.usedBy = socket.id;
+    state.players.push(player);
+    socket.join(ROOM_ID);
+    socket.emit("sessionAssigned", { id: socket.id, role: "player", nickname: player.nickname });
+    state.roundMessage = `${player.nickname} entro a la sala.`;
+    addChat("Sistema", state.roundMessage, true);
+    emitState();
   });
 
-  socket.on("room:watch", (rawCode) => {
-    leaveCurrentRoom(socket, true);
-    const code = String(rawCode || "").trim().toUpperCase();
-    const room = rooms.find((item) => item.code === code);
-
-    if (!room) {
-      socket.emit("app:error", "La clave no corresponde a ninguna sala activa.");
+  socket.on("adminStartRound", () => {
+    if (!requireAdmin(socket)) return;
+    if (state.players.length < 1) {
+      socket.emit("errorMessage", "Debe haber al menos un jugador.");
       return;
     }
-
-    room.spectators.push(socket.id);
-    addLog(room, "Un observador ingreso a la sala.");
-    joinRoom(socket, room, "spectator");
+    state.roundNumber += 1;
+    state.roundActive = true;
+    state.spinning = false;
+    state.winningColor = null;
+    resetChoicesForRound();
+    state.roundMessage = `Ronda ${state.roundNumber}: los jugadores deben elegir un color.`;
+    addChat("Sistema", state.roundMessage, true);
+    emitState();
   });
 
-  socket.on("room:leave", () => {
-    leaveCurrentRoom(socket);
-    socket.emit("session:left");
+  socket.on("chooseColor", (colorId) => {
+    const player = findPlayer(socket.id);
+    if (!player) return;
+    if (!state.roundActive || state.spinning || state.winningColor) {
+      socket.emit("errorMessage", "Ahora no se puede elegir color.");
+      return;
+    }
+    if (!COLORS.some((color) => color.id === colorId)) {
+      socket.emit("errorMessage", "Color invalido.");
+      return;
+    }
+    player.choice = colorId;
+    state.roundMessage = `${player.nickname} eligio ${COLORS.find((color) => color.id === colorId).label}.`;
+    emitState();
   });
 
-  socket.on("game:reset", () => {
-    const session = socketSessions.get(socket.id);
-    const room = session && rooms.find((item) => item.number === session.roomNumber);
-    if (!room) return;
-    if (socket.id !== room.hostId) {
-      socket.emit("app:error", "Solo el anfitrion puede reiniciar la sala.");
+  socket.on("adminSpin", () => {
+    if (!requireAdmin(socket)) return;
+    if (!state.roundActive) {
+      socket.emit("errorMessage", "Primero inicia una ronda.");
       return;
     }
-    resetGame(room);
-    addLog(room, "El anfitrion reinicio la sala.");
-    emitRoom(room);
+    if (state.spinning) return;
+
+    state.spinning = true;
+    state.roundMessage = "La ruleta esta girando...";
+    emitState();
+
+    setTimeout(() => {
+      const winner = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const winners = state.players.filter((player) => player.choice === winner.id);
+      state.spinning = false;
+      state.winningColor = winner.id;
+      state.roundActive = false;
+      state.roundMessage = winners.length
+        ? `Salio ${winner.label}. Acertaron: ${winners.map((player) => player.nickname).join(", ")}.`
+        : `Salio ${winner.label}. Nadie acerto esta ronda.`;
+      addChat("Sistema", state.roundMessage, true);
+      emitState();
+    }, 2200);
   });
 
-  socket.on("game:newRound", () => {
-    const session = socketSessions.get(socket.id);
-    const room = session && rooms.find((item) => item.number === session.roomNumber);
-    if (!room) return;
-    if (socket.id !== room.hostId) {
-      socket.emit("app:error", "Solo el anfitrion puede iniciar una nueva ronda.");
-      return;
-    }
-    if (room.players.length !== 2) {
-      socket.emit("app:error", "Se necesitan dos jugadores para iniciar una nueva ronda.");
-      return;
-    }
-    resetGame(room);
-    room.phase = "seleccion";
-    addLog(room, "Nueva ronda iniciada. Ambos jugadores deben elegir su numero secreto.");
-    emitRoom(room);
+  socket.on("adminKick", (playerId) => {
+    if (!requireAdmin(socket)) return;
+    const player = state.players.find((item) => item.id === playerId);
+    if (!player) return;
+
+    state.players = state.players.filter((item) => item.id !== playerId);
+    const access = state.accessCodes.find((item) => item.usedBy === playerId);
+    if (access) access.usedBy = null;
+    io.to(playerId).emit("kicked", "El admin te expulso del servidor.");
+    io.sockets.sockets.get(playerId)?.leave(ROOM_ID);
+    addChat("Sistema", `${player.nickname} fue expulsado por el admin.`, true);
+    emitState();
   });
 
-  socket.on("game:selectNumber", (value) => {
-    const session = socketSessions.get(socket.id);
-    const room = session && rooms.find((item) => item.number === session.roomNumber);
-    if (!room) return;
-    if (session.role !== "player") {
-      socket.emit("app:error", "Los espectadores solo pueden observar la partida.");
-      return;
-    }
-    if (!["listos", "seleccion"].includes(room.phase)) {
-      socket.emit("app:error", "Ahora no se puede cambiar el numero secreto.");
-      return;
-    }
-    if (room.players.length !== 2) {
-      socket.emit("app:error", "Espera a que entre el segundo jugador.");
-      return;
-    }
-
-    const number = Number(value);
-    if (!Number.isInteger(number) || number < 1 || number > 100) {
-      socket.emit("app:error", "Elige un numero entero entre 1 y 100.");
-      return;
-    }
-
-    room.phase = "seleccion";
-    room.secrets[socket.id] = number;
-    addLog(room, `${playerLabel(room, socket.id)} eligio su numero secreto.`);
-
-    if (room.players.every((id) => room.secrets[id])) {
-      room.phase = "adivinanza";
-      room.currentTurn = room.players[0];
-      addLog(room, "Ambos numeros estan listos. Comienza la fase de intuicion.");
-    }
-
-    emitRoom(room);
+  socket.on("adminSetChat", (enabled) => {
+    if (!requireAdmin(socket)) return;
+    state.chatEnabled = Boolean(enabled);
+    addChat("Sistema", state.chatEnabled ? "El chat fue activado." : "El chat fue silenciado.", true);
+    emitState();
   });
 
-  socket.on("game:guess", (value) => {
-    const session = socketSessions.get(socket.id);
-    const room = session && rooms.find((item) => item.number === session.roomNumber);
-    if (!room) return;
-    if (room.phase !== "adivinanza") {
-      socket.emit("app:error", "La fase de adivinanza aun no esta activa.");
+  socket.on("chatMessage", (message) => {
+    const player = findPlayer(socket.id);
+    const isAdmin = socket.id === state.adminId;
+    const sender = isAdmin ? state.adminName : player?.nickname;
+
+    if (!sender) {
+      socket.emit("errorMessage", "Debes entrar para usar el chat.");
       return;
     }
-    const turnError = assertPlayerTurn(socket, room);
-    if (turnError) {
-      socket.emit("app:error", turnError);
+    if (!isAdmin && !state.chatEnabled) {
+      socket.emit("errorMessage", "El chat esta silenciado por el admin.");
       return;
     }
-
-    const guess = Number(value);
-    if (!Number.isInteger(guess) || guess < 1 || guess > 100) {
-      socket.emit("app:error", "Ingresa una intuicion valida entre 1 y 100.");
-      return;
-    }
-
-    room.guesses[socket.id] = guess;
-    addLog(room, `${playerLabel(room, socket.id)} registro su intuicion.`);
-
-    const nextPlayer = room.players.find((id) => id !== socket.id && !room.guesses[id]);
-    if (nextPlayer) {
-      room.currentTurn = nextPlayer;
-    } else {
-      calculateScores(room);
-      room.phase = "resultado";
-      room.currentTurn = null;
-      addLog(room, "La conexion fue calculada.");
-    }
-
-    emitRoom(room);
+    if (addChat(sender, message)) emitState();
   });
 
   socket.on("disconnect", () => {
-    leaveCurrentRoom(socket);
+    if (socket.id === state.adminId) {
+      addChat("Sistema", "El admin se desconecto. Sala cerrada.", true);
+      state.adminId = null;
+      state.adminName = "";
+      state.accessCodes = [];
+      state.players = [];
+      state.roundActive = false;
+      state.spinning = false;
+      state.winningColor = null;
+      state.chatEnabled = true;
+      state.roundMessage = "Esperando al admin.";
+      emitState();
+      return;
+    }
+
+    const player = findPlayer(socket.id);
+    if (!player) return;
+    state.players = state.players.filter((item) => item.id !== socket.id);
+    const access = state.accessCodes.find((item) => item.usedBy === socket.id);
+    if (access) access.usedBy = null;
+    addChat("Sistema", `${player.nickname} salio de la sala.`, true);
+    emitState();
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`Conexión 1-100 escuchando en puerto ${PORT}`);
+  console.log(`Ruleta online activa en http://localhost:${PORT}`);
 });

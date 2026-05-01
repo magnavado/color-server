@@ -3,223 +3,535 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Conexión 1-100</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
+  <title>Ruleta Online</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #f7f7f2;
+      background: #101319;
+    }
+    button, input { font: inherit; }
+    button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 16px;
+      background: #4fb286;
+      color: #07110c;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #3c485c;
+      border-radius: 8px;
+      padding: 0 12px;
+      color: #fff;
+      background: #0f131a;
+    }
+    .hidden { display: none !important; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 22px;
+      background: #171c26;
+      border-bottom: 1px solid #2b3444;
+    }
+    .topbar h1 { margin: 0; font-size: 22px; }
+    .admin-open {
+      min-height: 34px;
+      padding: 0 12px;
+      background: #293241;
+      color: #dbe4ee;
+      font-size: 13px;
+    }
+    .status {
+      color: #f4c95d;
+      font-weight: 800;
+      text-align: center;
+      padding: 12px 18px;
+    }
+    .menu {
+      display: grid;
+      place-items: center;
+      min-height: calc(100vh - 104px);
+      padding: 24px;
+    }
+    .play-button {
+      width: min(520px, 100%);
+      min-height: 120px;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      background: #f4c95d;
+      color: #17130a;
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .modal-card {
+      width: min(440px, 100%);
+      display: grid;
+      gap: 12px;
+      padding: 22px;
+      border: 1px solid #303a4c;
+      border-radius: 12px;
+      background: #171c26;
+    }
+    .modal-card h2 { margin: 0; }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .secondary { background: #303a4c; color: #fff; }
+    .danger { background: #e84d4f; color: #fff; }
+    .app {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      min-height: calc(100vh - 104px);
+    }
+    .main {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      padding: 22px;
+    }
+    .admin-panel {
+      display: none;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid #303a4c;
+      border-radius: 12px;
+      background: #171c26;
+    }
+    .admin-panel.active { display: grid; }
+    .code-grid, .admin-users {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .code-box, .user-admin-row {
+      padding: 10px;
+      border: 1px solid #303a4c;
+      border-radius: 8px;
+      background: #111722;
+    }
+    .code-box strong {
+      display: block;
+      color: #f4c95d;
+      font-size: 24px;
+      letter-spacing: 0.08em;
+    }
+    .admin-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .arena {
+      position: relative;
+      min-height: 620px;
+      border: 1px solid #303a4c;
+      border-radius: 12px;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #202838, #111722 70%);
+    }
+    .roulette-wrap {
+      position: absolute;
+      left: 50%;
+      top: 45%;
+      width: min(360px, 68vw);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+    }
+    .pointer {
+      position: absolute;
+      left: 50%;
+      top: -12px;
+      z-index: 2;
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 28px solid #f7f7f2;
+      transform: translateX(-50%);
+    }
+    .roulette {
+      width: 100%;
+      height: 100%;
+      border: 10px solid #f7f7f2;
+      border-radius: 50%;
+      background: conic-gradient(#8b5a2b 0 60deg, #39b56a 60deg 120deg, #f4c95d 120deg 180deg, #e84d4f 180deg 240deg, #f08a24 240deg 300deg, #3c7cff 300deg 360deg);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.45);
+      transition: transform 2.2s cubic-bezier(.12,.68,.18,1);
+    }
+    .roulette::after {
+      content: "";
+      position: absolute;
+      inset: 38%;
+      border-radius: 50%;
+      background: #101319;
+      border: 6px solid #f7f7f2;
+    }
+    .winner-chip {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 3;
+      transform: translate(-50%, -50%);
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #f7f7f2;
+      color: #101319;
+      font-weight: 900;
+    }
+    .player-node {
+      position: absolute;
+      width: 128px;
+      min-height: 58px;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+      border: 1px solid #303a4c;
+      border-radius: 10px;
+      background: rgba(23, 28, 38, 0.94);
+      text-align: center;
+      font-weight: 800;
+      transform: translate(-50%, -50%);
+    }
+    .player-node.me { border-color: #f4c95d; box-shadow: 0 0 0 2px rgba(244,201,93,0.2); }
+    .player-node small { color: #aab4c3; font-weight: 700; }
+    .me-bottom {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      min-width: min(420px, calc(100% - 28px));
+      padding: 14px;
+      border: 1px solid #f4c95d;
+      border-radius: 12px;
+      background: #171c26;
+      text-align: center;
+    }
+    .colors {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .color-btn {
+      min-height: 42px;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+    }
+    .chat {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      padding: 18px;
+      border-left: 1px solid #303a4c;
+      background: #171c26;
+    }
+    .chat h2 { margin: 0; }
+    .chat-log {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 10px;
+      min-height: 340px;
+      overflow: auto;
+    }
+    .chat-row {
+      padding: 10px;
+      border: 1px solid #303a4c;
+      border-radius: 8px;
+      background: #111722;
+    }
+    .chat-row.system { color: #f4c95d; }
+    .chat-row small { display: block; margin-bottom: 4px; color: #aab4c3; font-weight: 800; }
+    .chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .chat { border-left: 0; border-top: 1px solid #303a4c; }
+      .code-grid, .admin-users, .colors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
 </head>
 <body>
-  <div class="ambient-line"></div>
-  <div class="app-shell">
-    <section id="menuView" class="view active">
-      <main class="home">
-        <header class="brand-header">
-          <div>
-            <p class="eyebrow">Experiencia multijugador privada</p>
-            <h1>Conexión 1-100</h1>
-          </div>
-          <button id="quickCreateBtn" class="primary-btn">Crear sala</button>
-        </header>
+  <header class="topbar">
+    <h1>Ruleta Online</h1>
+    <button id="adminOpenBtn" class="admin-open">Ingresar como admin</button>
+  </header>
+  <div id="status" class="status">Esperando conexión...</div>
 
-        <section class="home-hero">
-          <div class="hero-statement">
-            <span class="luxury-mark">1-100</span>
-            <h2>Una lectura elegante de intuición compartida.</h2>
-            <p>Dos jugadores eligen números secretos y tratan de sentir la cifra del otro. El resultado no declara ganadores: revela un porcentaje de conexión telepática.</p>
-          </div>
-          <div class="signature-panel">
-            <p>Sesiones privadas</p>
-            <strong>6 salas</strong>
-            <span>Códigos cortos, espectadores en vivo y rondas sincronizadas por Socket.IO.</span>
-          </div>
-        </section>
+  <section id="menuView" class="menu">
+    <button id="playOpenBtn" class="play-button">Jugar, tengo un código</button>
+  </section>
 
-        <nav class="main-menu" aria-label="Menú principal">
-          <button class="menu-tile" data-target="info">
-            <span>Información</span>
-            <strong>Cómo funciona</strong>
-            <small>Reglas, turnos y conexión final.</small>
-          </button>
-          <button class="menu-tile" data-target="rooms">
-            <span>Salas</span>
-            <strong>Ver salas</strong>
-            <small>Estado en vivo de las 6 salas.</small>
-          </button>
-          <button class="menu-tile" data-target="observer">
-            <span>Observador</span>
-            <strong>Mirar partida</strong>
-            <small>Entra solo a ver con una clave.</small>
-          </button>
-          <button class="menu-tile" data-target="join">
-            <span>Tengo un código</span>
-            <strong>Entrar a jugar</strong>
-            <small>Únete como jugador o espectador si está llena.</small>
-          </button>
-        </nav>
-      </main>
-    </section>
-
-    <section id="infoView" class="view">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Información</p>
-          <h2>Una conexión, no una competencia</h2>
+  <section id="appView" class="app hidden">
+    <main class="main">
+      <section id="adminPanel" class="admin-panel">
+        <h2>Panel del admin</h2>
+        <div id="codeGrid" class="code-grid"></div>
+        <div class="admin-actions">
+          <button id="startRoundBtn">Iniciar ronda</button>
+          <button id="spinBtn" class="secondary">Girar ruleta</button>
+          <button id="muteBtn" class="secondary">Silenciar a todos</button>
+          <button id="enableChatBtn" class="secondary">Activar chat</button>
         </div>
-        <button class="ghost-btn back-menu">Regresar al menú</button>
-      </header>
-      <main class="content-grid">
-        <article class="feature-card">
-          <span>01</span>
-          <h3>Números secretos</h3>
-          <p>Cada jugador elige un número del 1 al 100. La sala espera hasta que ambos lo hayan guardado.</p>
-        </article>
-        <article class="feature-card">
-          <span>02</span>
-          <h3>Turnos claros</h3>
-          <p>Primero intuye Jugador 1, luego Jugador 2. Nadie puede actuar fuera de su turno.</p>
-        </article>
-        <article class="feature-card">
-          <span>03</span>
-          <h3>Porcentaje final</h3>
-          <p>La precisión se calcula por cercanía. El promedio de ambos crea la conexión telepática total.</p>
-        </article>
-      </main>
-    </section>
+        <div id="adminUsers" class="admin-users"></div>
+      </section>
 
-    <section id="joinView" class="view">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Acceso privado</p>
-          <h2>Tengo un código</h2>
+      <section class="arena">
+        <div class="roulette-wrap">
+          <div class="pointer"></div>
+          <div id="roulette" class="roulette"></div>
+          <div id="winnerChip" class="winner-chip">Sin giro</div>
         </div>
-        <button class="ghost-btn back-menu">Regresar al menú</button>
-      </header>
-      <main class="access-layout">
-        <section class="access-card">
-          <h3>Entrar a jugar</h3>
-          <p>Si la sala tiene un lugar disponible, entrarás como segundo jugador. Si ya está completa, entrarás como espectador.</p>
-          <form id="codeForm" class="code-form">
-            <label for="roomCode">Clave de sala</label>
-            <div class="inline-form">
-              <input id="roomCode" maxlength="4" autocomplete="off" placeholder="A7K2">
-              <button class="small-btn" type="submit">Entrar</button>
-            </div>
-          </form>
-        </section>
-      </main>
-    </section>
+        <div id="playersAround"></div>
+        <div id="meBottom" class="me-bottom hidden"></div>
+      </section>
+    </main>
 
-    <section id="observerView" class="view">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Modo observador</p>
-          <h2>Mirar una sala</h2>
-        </div>
-        <button class="ghost-btn back-menu">Regresar al menú</button>
-      </header>
-      <main class="access-layout">
-        <section class="access-card observer-card">
-          <h3>Entrar solo a observar</h3>
-          <p>Verás números elegidos, intuiciones, precisión, fase actual y espectadores conectados, sin modificar la partida.</p>
-          <form id="observerForm" class="code-form">
-            <label for="observerCode">Clave de sala</label>
-            <div class="inline-form">
-              <input id="observerCode" maxlength="4" autocomplete="off" placeholder="A7K2">
-              <button class="small-btn" type="submit">Observar</button>
-            </div>
-          </form>
-        </section>
-      </main>
-    </section>
+    <aside class="chat">
+      <h2>Chat grupal</h2>
+      <div id="chatLog" class="chat-log"></div>
+      <form id="chatForm" class="chat-form">
+        <input id="chatMessage" maxlength="240" autocomplete="off" placeholder="Mensaje">
+        <button type="submit">Enviar</button>
+      </form>
+    </aside>
+  </section>
 
-    <section id="roomsView" class="view">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Salas</p>
-          <h2>Estado en tiempo real</h2>
-        </div>
-        <button class="ghost-btn back-menu">Regresar al menú</button>
-      </header>
-      <div id="roomsGrid" class="rooms-grid"></div>
-    </section>
+  <section id="adminModal" class="modal hidden">
+    <form id="adminForm" class="modal-card">
+      <h2>Admin</h2>
+      <input id="adminNickname" maxlength="18" autocomplete="off" placeholder="Nickname del admin">
+      <input id="adminCode" type="password" autocomplete="off" placeholder="Clave secreta">
+      <div class="modal-actions">
+        <button type="button" class="secondary close-modal">Cancelar</button>
+        <button type="submit">Entrar</button>
+      </div>
+    </form>
+  </section>
 
-    <section id="gameView" class="view">
-      <header class="topbar game-topbar">
-        <div>
-          <p id="roleBadge" class="role-badge">Conectando</p>
-          <h2 id="roomTitle">Sala</h2>
-          <p id="roomCodeText" class="code-line"></p>
-        </div>
-        <div class="top-actions">
-          <button id="backMenuBtn" class="ghost-btn">Regresar al menú</button>
-          <button id="leaveBtn" class="danger-btn">Salir de sesión</button>
-        </div>
-      </header>
-
-      <main class="game-layout">
-        <section class="game-stage">
-          <div class="phase-card main-phase">
-            <p class="eyebrow">Fase actual</p>
-            <h3 id="phaseTitle">Esperando</h3>
-            <p id="phaseText">Preparando la sala.</p>
-          </div>
-
-          <div id="hostNotice" class="host-notice hidden"></div>
-
-          <div id="playerControls" class="action-card">
-            <form id="secretForm" class="game-form hidden">
-              <label for="secretNumber">Tu número secreto</label>
-              <div class="inline-form">
-                <input id="secretNumber" type="number" min="1" max="100" placeholder="1-100">
-                <button class="small-btn" type="submit">Guardar</button>
-              </div>
-            </form>
-
-            <form id="guessForm" class="game-form hidden">
-              <label for="guessNumber">Tu intuición sobre el otro número</label>
-              <div class="inline-form">
-                <input id="guessNumber" type="number" min="1" max="100" placeholder="1-100">
-                <button class="small-btn" type="submit">Enviar</button>
-              </div>
-            </form>
-
-            <div id="spectatorMessage" class="spectator-message hidden">Estás mirando como observador. La sala se actualiza en tiempo real.</div>
-          </div>
-
-          <div id="resultPanel" class="result-panel hidden">
-            <p class="eyebrow">Resultado místico</p>
-            <h3 id="totalConnection">0%</h3>
-            <div id="scoreRows" class="score-rows"></div>
-          </div>
-        </section>
-
-        <aside class="side-panel">
-          <div class="players-card">
-            <div class="panel-heading">
-              <h3>Participantes</h3>
-              <span id="spectatorCount">0 espectadores</span>
-            </div>
-            <div id="playersList" class="players-list"></div>
-          </div>
-
-          <div id="hostControls" class="host-controls hidden">
-            <button id="newRoundBtn" class="primary-btn">Iniciar nueva ronda</button>
-            <button id="resetBtn" class="secondary-btn">Reiniciar sala</button>
-          </div>
-
-          <div class="log-card">
-            <h3>Actividad</h3>
-            <div id="activityLog" class="activity-log"></div>
-          </div>
-        </aside>
-      </main>
-    </section>
-  </div>
-
-  <div id="toast" class="toast hidden"></div>
+  <section id="playerModal" class="modal hidden">
+    <form id="playerForm" class="modal-card">
+      <h2>Entrar a jugar</h2>
+      <input id="playerNickname" maxlength="18" autocomplete="off" placeholder="Tu nickname">
+      <input id="playerCode" autocomplete="off" placeholder="Código">
+      <div class="modal-actions">
+        <button type="button" class="secondary close-modal">Cancelar</button>
+        <button type="submit">Entrar</button>
+      </div>
+    </form>
+  </section>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/client.js"></script>
+  <script>
+    const socket = io();
+    const adminOpenBtn = document.getElementById("adminOpenBtn");
+    const playOpenBtn = document.getElementById("playOpenBtn");
+    const adminModal = document.getElementById("adminModal");
+    const playerModal = document.getElementById("playerModal");
+    const adminForm = document.getElementById("adminForm");
+    const playerForm = document.getElementById("playerForm");
+    const adminNickname = document.getElementById("adminNickname");
+    const adminCode = document.getElementById("adminCode");
+    const playerNickname = document.getElementById("playerNickname");
+    const playerCode = document.getElementById("playerCode");
+    const menuView = document.getElementById("menuView");
+    const appView = document.getElementById("appView");
+    const statusEl = document.getElementById("status");
+    const adminPanel = document.getElementById("adminPanel");
+    const codeGrid = document.getElementById("codeGrid");
+    const adminUsers = document.getElementById("adminUsers");
+    const startRoundBtn = document.getElementById("startRoundBtn");
+    const spinBtn = document.getElementById("spinBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const enableChatBtn = document.getElementById("enableChatBtn");
+    const roulette = document.getElementById("roulette");
+    const winnerChip = document.getElementById("winnerChip");
+    const playersAround = document.getElementById("playersAround");
+    const meBottom = document.getElementById("meBottom");
+    const chatLog = document.getElementById("chatLog");
+    const chatForm = document.getElementById("chatForm");
+    const chatMessage = document.getElementById("chatMessage");
+
+    let myId = null;
+    let myRole = null;
+    let latestState = null;
+    let rotation = 0;
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function openModal(modal) { modal.classList.remove("hidden"); }
+    function closeModals() {
+      adminModal.classList.add("hidden");
+      playerModal.classList.add("hidden");
+    }
+
+    adminOpenBtn.addEventListener("click", () => openModal(adminModal));
+    playOpenBtn.addEventListener("click", () => openModal(playerModal));
+    document.querySelectorAll(".close-modal").forEach((button) => button.addEventListener("click", closeModals));
+
+    adminForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      socket.emit("adminLogin", { code: adminCode.value, nickname: adminNickname.value });
+    });
+
+    playerForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      socket.emit("playerJoin", { code: playerCode.value, nickname: playerNickname.value });
+    });
+
+    startRoundBtn.addEventListener("click", () => socket.emit("adminStartRound"));
+    spinBtn.addEventListener("click", () => socket.emit("adminSpin"));
+    muteBtn.addEventListener("click", () => socket.emit("adminSetChat", false));
+    enableChatBtn.addEventListener("click", () => socket.emit("adminSetChat", true));
+
+    adminUsers.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-kick]");
+      if (button) socket.emit("adminKick", button.dataset.kick);
+    });
+
+    chatForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      socket.emit("chatMessage", chatMessage.value);
+      chatMessage.value = "";
+    });
+
+    socket.on("sessionAssigned", ({ id, role }) => {
+      myId = id;
+      myRole = role;
+      closeModals();
+      menuView.classList.add("hidden");
+      appView.classList.remove("hidden");
+      adminPanel.classList.toggle("active", role === "admin");
+    });
+
+    socket.on("adminState", ({ accessCodes, players, chatEnabled }) => {
+      codeGrid.innerHTML = accessCodes.map((item) => `
+        <div class="code-box">
+          <small>Código ${item.slot}</small>
+          <strong>${item.code}</strong>
+          <small>${item.usedBy ? "Usado" : "Libre"}</small>
+        </div>
+      `).join("");
+      adminUsers.innerHTML = players.length
+        ? players.map((player) => `
+          <div class="user-admin-row">
+            <strong>${escapeHtml(player.nickname)}</strong>
+            <small>${player.choice || "Sin color"}</small>
+            <button class="danger" data-kick="${player.id}">Expulsar</button>
+          </div>
+        `).join("")
+        : '<div class="user-admin-row">Sin jugadores todavía</div>';
+      muteBtn.disabled = !chatEnabled;
+      enableChatBtn.disabled = chatEnabled;
+    });
+
+    socket.on("gameState", (state) => {
+      latestState = state;
+      render();
+    });
+
+    socket.on("errorMessage", (message) => {
+      statusEl.textContent = message;
+    });
+
+    socket.on("kicked", (message) => {
+      alert(message);
+      location.reload();
+    });
+
+    function render() {
+      if (!latestState) return;
+      statusEl.textContent = latestState.roundMessage + (latestState.adminName ? ` Admin: ${latestState.adminName}` : "");
+      chatForm.classList.toggle("hidden", !myRole);
+      chatMessage.disabled = myRole !== "admin" && !latestState.chatEnabled;
+
+      const winner = latestState.colors.find((color) => color.id === latestState.winningColor);
+      winnerChip.textContent = latestState.spinning ? "Girando..." : winner ? winner.label : "Sin giro";
+      if (latestState.spinning) {
+        rotation += 1080 + Math.floor(Math.random() * 360);
+        roulette.style.transform = `rotate(${rotation}deg)`;
+      } else if (winner) {
+        const index = latestState.colors.findIndex((color) => color.id === winner.id);
+        rotation += 360 - ((index * 60) + 30);
+        roulette.style.transform = `rotate(${rotation}deg)`;
+      }
+
+      renderPlayersAround();
+      renderMePanel();
+      renderChat();
+    }
+
+    function renderPlayersAround() {
+      const players = latestState.players;
+      playersAround.innerHTML = players.map((player, index) => {
+        const angle = (Math.PI * 2 * index / Math.max(players.length, 1)) - Math.PI / 2;
+        const radiusX = 39;
+        const radiusY = 36;
+        const left = 50 + Math.cos(angle) * radiusX;
+        const top = 45 + Math.sin(angle) * radiusY;
+        const color = latestState.colors.find((item) => item.id === player.choice);
+        return `
+          <div class="player-node ${player.id === myId ? "me" : ""}" style="left:${left}%;top:${top}%">
+            <div>${escapeHtml(player.nickname)}</div>
+            <small>${color ? color.label : "Sin elegir"}</small>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderMePanel() {
+      const me = latestState.players.find((player) => player.id === myId);
+      if (!me) {
+        meBottom.classList.toggle("hidden", myRole !== "admin");
+        meBottom.innerHTML = myRole === "admin" ? `<strong>${escapeHtml(latestState.adminName || "Admin")}</strong><div>Controlando la ruleta</div>` : "";
+        return;
+      }
+      const canChoose = latestState.roundActive && !latestState.spinning && !latestState.winningColor;
+      meBottom.classList.remove("hidden");
+      meBottom.innerHTML = `
+        <strong>${escapeHtml(me.nickname)}</strong>
+        <div>Tu color: ${latestState.colors.find((color) => color.id === me.choice)?.label || "sin elegir"}</div>
+        <div class="colors">
+          ${latestState.colors.map((color) => `
+            <button class="color-btn" style="background:${color.hex}" ${canChoose ? "" : "disabled"} onclick="chooseColor('${color.id}')">${color.label}</button>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderChat() {
+      chatLog.innerHTML = latestState.chat.length
+        ? latestState.chat.map((item) => `
+          <div class="chat-row ${item.system ? "system" : ""}">
+            <small>${item.time} - ${escapeHtml(item.sender)}</small>
+            <div>${escapeHtml(item.message)}</div>
+          </div>
+        `).join("")
+        : '<div class="chat-row system">El chat grupal aparecerá aquí.</div>';
+    }
+
+    function chooseColor(colorId) {
+      socket.emit("chooseColor", colorId);
+    }
+  </script>
 </body>
 </html>
