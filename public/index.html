@@ -3,535 +3,400 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ruleta Online</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #f7f7f2;
-      background: #101319;
-    }
-    button, input { font: inherit; }
-    button {
-      min-height: 44px;
-      border: 0;
-      border-radius: 8px;
-      padding: 0 16px;
-      background: #4fb286;
-      color: #07110c;
-      font-weight: 900;
-      cursor: pointer;
-    }
-    button:disabled { cursor: not-allowed; opacity: 0.45; }
-    input {
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid #3c485c;
-      border-radius: 8px;
-      padding: 0 12px;
-      color: #fff;
-      background: #0f131a;
-    }
-    .hidden { display: none !important; }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 22px;
-      background: #171c26;
-      border-bottom: 1px solid #2b3444;
-    }
-    .topbar h1 { margin: 0; font-size: 22px; }
-    .admin-open {
-      min-height: 34px;
-      padding: 0 12px;
-      background: #293241;
-      color: #dbe4ee;
-      font-size: 13px;
-    }
-    .status {
-      color: #f4c95d;
-      font-weight: 800;
-      text-align: center;
-      padding: 12px 18px;
-    }
-    .menu {
-      display: grid;
-      place-items: center;
-      min-height: calc(100vh - 104px);
-      padding: 24px;
-    }
-    .play-button {
-      width: min(520px, 100%);
-      min-height: 120px;
-      font-size: clamp(1.8rem, 5vw, 3rem);
-      background: #f4c95d;
-      color: #17130a;
-    }
-    .modal {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: grid;
-      place-items: center;
-      padding: 18px;
-      background: rgba(0, 0, 0, 0.7);
-    }
-    .modal-card {
-      width: min(440px, 100%);
-      display: grid;
-      gap: 12px;
-      padding: 22px;
-      border: 1px solid #303a4c;
-      border-radius: 12px;
-      background: #171c26;
-    }
-    .modal-card h2 { margin: 0; }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-    .secondary { background: #303a4c; color: #fff; }
-    .danger { background: #e84d4f; color: #fff; }
-    .app {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 340px;
-      min-height: calc(100vh - 104px);
-    }
-    .main {
-      display: grid;
-      gap: 18px;
-      align-content: start;
-      padding: 22px;
-    }
-    .admin-panel {
-      display: none;
-      gap: 14px;
-      padding: 18px;
-      border: 1px solid #303a4c;
-      border-radius: 12px;
-      background: #171c26;
-    }
-    .admin-panel.active { display: grid; }
-    .code-grid, .admin-users {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .code-box, .user-admin-row {
-      padding: 10px;
-      border: 1px solid #303a4c;
-      border-radius: 8px;
-      background: #111722;
-    }
-    .code-box strong {
-      display: block;
-      color: #f4c95d;
-      font-size: 24px;
-      letter-spacing: 0.08em;
-    }
-    .admin-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-    .arena {
-      position: relative;
-      min-height: 620px;
-      border: 1px solid #303a4c;
-      border-radius: 12px;
-      overflow: hidden;
-      background: radial-gradient(circle at center, #202838, #111722 70%);
-    }
-    .roulette-wrap {
-      position: absolute;
-      left: 50%;
-      top: 45%;
-      width: min(360px, 68vw);
-      aspect-ratio: 1;
-      transform: translate(-50%, -50%);
-    }
-    .pointer {
-      position: absolute;
-      left: 50%;
-      top: -12px;
-      z-index: 2;
-      width: 0;
-      height: 0;
-      border-left: 16px solid transparent;
-      border-right: 16px solid transparent;
-      border-top: 28px solid #f7f7f2;
-      transform: translateX(-50%);
-    }
-    .roulette {
-      width: 100%;
-      height: 100%;
-      border: 10px solid #f7f7f2;
-      border-radius: 50%;
-      background: conic-gradient(#8b5a2b 0 60deg, #39b56a 60deg 120deg, #f4c95d 120deg 180deg, #e84d4f 180deg 240deg, #f08a24 240deg 300deg, #3c7cff 300deg 360deg);
-      box-shadow: 0 24px 70px rgba(0,0,0,0.45);
-      transition: transform 2.2s cubic-bezier(.12,.68,.18,1);
-    }
-    .roulette::after {
-      content: "";
-      position: absolute;
-      inset: 38%;
-      border-radius: 50%;
-      background: #101319;
-      border: 6px solid #f7f7f2;
-    }
-    .winner-chip {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      z-index: 3;
-      transform: translate(-50%, -50%);
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: #f7f7f2;
-      color: #101319;
-      font-weight: 900;
-    }
-    .player-node {
-      position: absolute;
-      width: 128px;
-      min-height: 58px;
-      display: grid;
-      place-items: center;
-      padding: 8px;
-      border: 1px solid #303a4c;
-      border-radius: 10px;
-      background: rgba(23, 28, 38, 0.94);
-      text-align: center;
-      font-weight: 800;
-      transform: translate(-50%, -50%);
-    }
-    .player-node.me { border-color: #f4c95d; box-shadow: 0 0 0 2px rgba(244,201,93,0.2); }
-    .player-node small { color: #aab4c3; font-weight: 700; }
-    .me-bottom {
-      position: absolute;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      min-width: min(420px, calc(100% - 28px));
-      padding: 14px;
-      border: 1px solid #f4c95d;
-      border-radius: 12px;
-      background: #171c26;
-      text-align: center;
-    }
-    .colors {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .color-btn {
-      min-height: 42px;
-      color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.45);
-    }
-    .chat {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      gap: 12px;
-      padding: 18px;
-      border-left: 1px solid #303a4c;
-      background: #171c26;
-    }
-    .chat h2 { margin: 0; }
-    .chat-log {
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 10px;
-      min-height: 340px;
-      overflow: auto;
-    }
-    .chat-row {
-      padding: 10px;
-      border: 1px solid #303a4c;
-      border-radius: 8px;
-      background: #111722;
-    }
-    .chat-row.system { color: #f4c95d; }
-    .chat-row small { display: block; margin-bottom: 4px; color: #aab4c3; font-weight: 800; }
-    .chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-    @media (max-width: 980px) {
-      .app { grid-template-columns: 1fr; }
-      .chat { border-left: 0; border-top: 1px solid #303a4c; }
-      .code-grid, .admin-users, .colors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-  </style>
+  <title>Práctica Matemática</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>Ruleta Online</h1>
-    <button id="adminOpenBtn" class="admin-open">Ingresar como admin</button>
-  </header>
-  <div id="status" class="status">Esperando conexión...</div>
+  <div class="top-bar">
+    <div class="top-actions">
+      <button id="feedbackOpenButton" class="top-button" type="button">Enviar comentarios</button>
+      <button id="profileOpenButton" class="top-button" type="button">Mi sesión</button>
+    </div>
+    <div class="daily-counter">
+      <span id="dailyUsersCount">0</span>
+      <p>usuarios hoy</p>
+    </div>
+  </div>
 
-  <section id="menuView" class="menu">
-    <button id="playOpenBtn" class="play-button">Jugar, tengo un código</button>
-  </section>
+  <main class="app-shell">
+    <section id="menuScreen" class="screen active menu-screen">
+      <div class="ambient ambient-one"></div>
+      <div class="ambient ambient-two"></div>
 
-  <section id="appView" class="app hidden">
-    <main class="main">
-      <section id="adminPanel" class="admin-panel">
-        <h2>Panel del admin</h2>
-        <div id="codeGrid" class="code-grid"></div>
-        <div class="admin-actions">
-          <button id="startRoundBtn">Iniciar ronda</button>
-          <button id="spinBtn" class="secondary">Girar ruleta</button>
-          <button id="muteBtn" class="secondary">Silenciar a todos</button>
-          <button id="enableChatBtn" class="secondary">Activar chat</button>
+      <header class="hero">
+        <h1>Práctica Matemática</h1>
+        <p class="subtitle">Ejercicios de matemáticas para primaria.</p>
+      </header>
+
+      <nav class="menu-grid" aria-label="Menú principal">
+        <button class="lux-button menu-button" data-mode="multiplicaciones">Multiplicaciones</button>
+        <button class="lux-button menu-button" data-mode="sumas">Sumas</button>
+        <button class="lux-button menu-button" data-mode="restas">Restas</button>
+        <button class="lux-button menu-button featured" data-mode="divisiones">Divisiones</button>
+        <button id="tablesMenuButton" class="lux-button menu-button">Tablas de multiplicar</button>
+        <button class="lux-button menu-button" data-mode="surtido">Surtido</button>
+        <button id="memoryMenuButton" class="lux-button menu-button">Memorización</button>
+      </nav>
+
+      <button id="adminUnlockButton" class="admin-unlock" type="button" aria-label="Acceso de administrador">Administración</button>
+      <div id="adminKeyBox" class="admin-key-box" aria-live="polite">
+        <label for="adminKeyInput">Clave</label>
+        <input id="adminKeyInput" type="password" inputmode="numeric" autocomplete="off">
+        <button id="adminKeySubmit" class="gold-button" type="button">Entrar</button>
+      </div>
+    </section>
+
+    <section id="placeholderScreen" class="screen placeholder-screen">
+      <div class="placeholder-panel">
+        <h2 id="placeholderTitle"></h2>
+        <button class="gold-button back-menu">Volver al menú</button>
+      </div>
+    </section>
+
+    <section id="setupScreen" class="screen setup-screen">
+      <div class="setup-card glass-card">
+        <p id="modeLabel" class="eyebrow">Práctica</p>
+        <h2 id="setupQuestion">¿Cuántos ejercicios quieres practicar?</h2>
+        <form id="setupForm" class="setup-form">
+          <label for="questionCount">Cantidad de ejercicios</label>
+          <input id="questionCount" type="number" min="1" max="100" value="10" inputmode="numeric" autocomplete="off">
+          <p id="setupError" class="error-text" aria-live="polite"></p>
+          <div class="button-row">
+            <button type="button" class="ghost-button back-menu">Volver al menú</button>
+            <button type="submit" class="gold-button">Comenzar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="tablesChoiceScreen" class="screen setup-screen">
+      <div class="setup-card glass-card">
+        <p class="eyebrow">Tablas de multiplicar</p>
+        <h2>Elige una forma de practicar</h2>
+        <div class="choice-grid">
+          <button id="tablesMemoryChoiceButton" type="button" class="lux-button choice-button">Memorizar tablas aleatorias</button>
+          <button id="tablesSpecificChoiceButton" type="button" class="lux-button choice-button">Memorizar la tabla específica</button>
+          <button id="tablesNormalChoiceButton" type="button" class="lux-button choice-button">Práctica normal</button>
         </div>
-        <div id="adminUsers" class="admin-users"></div>
-      </section>
-
-      <section class="arena">
-        <div class="roulette-wrap">
-          <div class="pointer"></div>
-          <div id="roulette" class="roulette"></div>
-          <div id="winnerChip" class="winner-chip">Sin giro</div>
+        <div class="button-row centered">
+          <button type="button" class="ghost-button back-menu">Volver al menú</button>
         </div>
-        <div id="playersAround"></div>
-        <div id="meBottom" class="me-bottom hidden"></div>
-      </section>
-    </main>
+      </div>
+    </section>
 
-    <aside class="chat">
-      <h2>Chat grupal</h2>
-      <div id="chatLog" class="chat-log"></div>
-      <form id="chatForm" class="chat-form">
-        <input id="chatMessage" maxlength="240" autocomplete="off" placeholder="Mensaje">
-        <button type="submit">Enviar</button>
-      </form>
-    </aside>
-  </section>
+    <section id="tablesMemorySetupScreen" class="screen setup-screen">
+      <div class="setup-card glass-card">
+        <p class="eyebrow">Memorizar tablas aleatorias</p>
+        <h2>¿Cuántas preguntas quieres practicar?</h2>
+        <form id="tablesMemorySetupForm" class="setup-form">
+          <label for="tablesMemoryCount">Cantidad de preguntas</label>
+          <input id="tablesMemoryCount" type="number" min="1" max="100" value="10" inputmode="numeric" autocomplete="off">
+          <p id="tablesMemorySetupError" class="error-text" aria-live="polite"></p>
+          <div class="button-row">
+            <button type="button" class="ghost-button tables-choice-back">Volver</button>
+            <button type="submit" class="gold-button">Comenzar</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
-  <section id="adminModal" class="modal hidden">
-    <form id="adminForm" class="modal-card">
-      <h2>Admin</h2>
-      <input id="adminNickname" maxlength="18" autocomplete="off" placeholder="Nickname del admin">
-      <input id="adminCode" type="password" autocomplete="off" placeholder="Clave secreta">
-      <div class="modal-actions">
-        <button type="button" class="secondary close-modal">Cancelar</button>
-        <button type="submit">Entrar</button>
+    <section id="tablesSpecificSetupScreen" class="screen setup-screen">
+      <div class="setup-card glass-card">
+        <p class="eyebrow">Memorizar la tabla específica</p>
+        <h2>¿Qué tabla quieres estudiar?</h2>
+        <form id="tablesSpecificSetupForm" class="setup-form">
+          <label for="tablesSpecificNumber">Tabla del 2 al 12</label>
+          <input id="tablesSpecificNumber" type="number" min="2" max="12" value="2" inputmode="numeric" autocomplete="off">
+          <label for="tablesSpecificCount">Cantidad de preguntas</label>
+          <input id="tablesSpecificCount" type="number" min="1" max="100" value="10" inputmode="numeric" autocomplete="off">
+          <p id="tablesSpecificSetupError" class="error-text" aria-live="polite"></p>
+          <div class="button-row">
+            <button type="button" class="ghost-button tables-choice-back">Volver</button>
+            <button type="submit" class="gold-button">Comenzar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="tablesStudyScreen" class="screen setup-screen">
+      <div class="tables-study-card glass-card">
+        <div class="practice-topline">
+          <span>Tablas de multiplicar</span>
+          <span id="tablesStudyTimer" class="timer">00:00</span>
+        </div>
+        <p class="eyebrow">Memoriza</p>
+        <h2>Memoriza</h2>
+        <div id="tablesStudyList" class="tables-study-list"></div>
+        <div class="button-row centered">
+          <button type="button" class="ghost-button tables-choice-back">Volver</button>
+          <button id="tablesReadyButton" type="button" class="gold-button">Estoy listo</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tablesRecallScreen" class="screen setup-screen">
+      <div class="setup-card glass-card">
+        <div class="practice-topline">
+          <span id="tablesRecallProgress">Pregunta 1 de 10</span>
+          <span id="tablesRecallTimer" class="timer">00:00</span>
+        </div>
+        <div class="problem-area compact">
+          <p class="problem-caption">Recuerda el resultado</p>
+          <div id="tablesRecallProblem" class="problem-text">7 × 8</div>
+        </div>
+        <form id="tablesRecallForm" class="answer-form">
+          <label for="tablesRecallAnswer">Tu respuesta</label>
+          <input id="tablesRecallAnswer" type="number" inputmode="numeric" autocomplete="off">
+          <p id="tablesRecallFeedback" class="feedback-text" aria-live="polite"></p>
+          <div class="button-row">
+            <button type="button" class="ghost-button tables-choice-back">Volver</button>
+            <button type="submit" class="gold-button">Responder</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="practiceScreen" class="screen practice-screen">
+      <div class="practice-layout">
+        <article class="problem-card glass-card">
+          <div class="practice-topline">
+            <span id="progressLabel">Pregunta 1 de 10</span>
+            <span id="timerLabel" class="timer">00:00</span>
+          </div>
+
+          <div class="problem-area">
+            <p id="problemCaption" class="problem-caption">Resuelve el ejercicio</p>
+            <div id="problemText" class="problem-text">144 ÷ 12</div>
+          </div>
+
+          <form id="answerForm" class="answer-form">
+            <label for="answerInput">Tu respuesta</label>
+            <input id="answerInput" type="number" inputmode="numeric" autocomplete="off">
+            <p id="feedbackText" class="feedback-text" aria-live="polite"></p>
+            <div class="button-row">
+              <button type="button" class="ghost-button back-menu">Volver al menú</button>
+              <button type="submit" class="gold-button">Responder</button>
+            </div>
+          </form>
+        </article>
+
+        <aside class="board-card glass-card" aria-label="Pizarra de trabajo">
+          <div class="board-header">
+            <div>
+              <p class="eyebrow">Pizarra digital</p>
+              <h2>Área de cálculo</h2>
+            </div>
+            <button id="clearBoardButton" class="icon-button" type="button" title="Limpiar pizarra" aria-label="Limpiar pizarra">⌫</button>
+          </div>
+
+          <div class="tool-row" role="toolbar" aria-label="Herramientas de pizarra">
+            <button id="pencilButton" class="tool-button active" type="button">Lápiz</button>
+            <button id="eraserButton" class="tool-button" type="button">Borrador</button>
+          </div>
+
+          <div class="canvas-wrap">
+            <canvas id="drawingCanvas" aria-label="Lienzo para resolver ejercicios"></canvas>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="resultsScreen" class="screen results-screen">
+      <div class="results-card glass-card">
+        <p class="eyebrow">Resultados finales</p>
+        <h2>Práctica terminada</h2>
+        <div class="results-grid">
+          <div class="result-item">
+            <span id="correctTotal">0</span>
+            <p>Correctas</p>
+          </div>
+          <div class="result-item">
+            <span id="wrongTotal">0</span>
+            <p>Incorrectas</p>
+          </div>
+          <div class="result-item">
+            <span id="questionTotal">0</span>
+            <p>Total</p>
+          </div>
+          <div class="result-item">
+            <span id="finalTime">00:00</span>
+            <p>Tiempo</p>
+          </div>
+        </div>
+        <div id="resultsDetails" class="results-details"></div>
+        <div class="button-row centered">
+          <button class="ghost-button back-menu">Volver al menú</button>
+          <button id="practiceAgainButton" class="gold-button">Practicar otra vez</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="memoryScreen" class="screen memory-screen">
+      <div class="memory-card glass-card">
+        <div class="memory-header">
+          <div>
+            <p class="eyebrow">Memorización</p>
+            <h2>Repite el patrón</h2>
+          </div>
+          <div class="memory-score">
+            <span id="memoryScore">0</span>
+            <p>Aciertos</p>
+          </div>
+        </div>
+
+        <p id="memoryStatus" class="memory-status">Presiona comenzar para iniciar.</p>
+
+        <div id="memoryGrid" class="memory-grid" aria-label="Cuadrícula de memorización">
+          <button class="memory-cell" type="button" data-cell="0" aria-label="Celda 1"></button>
+          <button class="memory-cell" type="button" data-cell="1" aria-label="Celda 2"></button>
+          <button class="memory-cell" type="button" data-cell="2" aria-label="Celda 3"></button>
+          <button class="memory-cell" type="button" data-cell="3" aria-label="Celda 4"></button>
+          <button class="memory-cell" type="button" data-cell="4" aria-label="Celda 5"></button>
+          <button class="memory-cell" type="button" data-cell="5" aria-label="Celda 6"></button>
+          <button class="memory-cell" type="button" data-cell="6" aria-label="Celda 7"></button>
+          <button class="memory-cell" type="button" data-cell="7" aria-label="Celda 8"></button>
+          <button class="memory-cell" type="button" data-cell="8" aria-label="Celda 9"></button>
+        </div>
+
+        <div class="button-row centered">
+          <button type="button" class="ghost-button back-menu">Volver al menú</button>
+          <button id="startMemoryButton" type="button" class="gold-button">Comenzar</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="adminMessagesScreen" class="screen setup-screen">
+      <div class="admin-card glass-card">
+        <p class="eyebrow">Zona de mensajes</p>
+        <h2>Comentarios recibidos</h2>
+        <div class="admin-exact-users">
+          <span id="adminExactUsers">0</span>
+          <p>usuarios reales hoy</p>
+        </div>
+        <div id="adminMessagesList" class="admin-messages-list"></div>
+        <h2 class="admin-section-title">Solicitudes de acceso</h2>
+        <div id="adminAccessRequestsList" class="admin-messages-list"></div>
+        <h2 class="admin-section-title">Usuarios</h2>
+        <div class="button-row">
+          <button id="resetHistoryButton" type="button" class="ghost-button">Reiniciar historial de usuarios</button>
+        </div>
+        <div id="adminUsersList" class="admin-users-list"></div>
+        <div class="button-row centered">
+          <button type="button" class="ghost-button back-menu">Volver al menú</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="feedbackModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+    <form id="feedbackForm" class="feedback-modal glass-card">
+      <h2 id="feedbackTitle">Enviar comentarios</h2>
+      <label for="feedbackName">Nombre</label>
+      <input id="feedbackName" type="text" autocomplete="name" required>
+
+      <label for="feedbackEmail">Correo opcional</label>
+      <input id="feedbackEmail" type="email" autocomplete="email">
+
+      <label>Calificación</label>
+      <div id="ratingStars" class="rating-stars" aria-label="Calificación de 1 a 5 estrellas">
+        <button type="button" data-rating="1">★</button>
+        <button type="button" data-rating="2">★</button>
+        <button type="button" data-rating="3">★</button>
+        <button type="button" data-rating="4">★</button>
+        <button type="button" data-rating="5">★</button>
+      </div>
+
+      <label for="feedbackMessage">Mensaje</label>
+      <textarea id="feedbackMessage" rows="5" required></textarea>
+
+      <label class="check-line">
+        <input id="anonymousMessageInput" type="checkbox">
+        Mensaje anónimo
+      </label>
+
+      <div class="button-row">
+        <button id="feedbackCloseButton" type="button" class="ghost-button">Cancelar</button>
+        <button type="submit" class="gold-button">Enviar</button>
       </div>
     </form>
-  </section>
+  </div>
 
-  <section id="playerModal" class="modal hidden">
-    <form id="playerForm" class="modal-card">
-      <h2>Entrar a jugar</h2>
-      <input id="playerNickname" maxlength="18" autocomplete="off" placeholder="Tu nickname">
-      <input id="playerCode" autocomplete="off" placeholder="Código">
-      <div class="modal-actions">
-        <button type="button" class="secondary close-modal">Cancelar</button>
-        <button type="submit">Entrar</button>
+  <div id="loginModal" class="modal-backdrop locked" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <form id="loginForm" class="feedback-modal login-modal-card glass-card">
+      <h2 id="loginTitle">Ingresa con tu clave</h2>
+      <label for="loginKeyInput">Clave</label>
+      <input id="loginKeyInput" type="password" minlength="3" maxlength="12" autocomplete="off" required>
+      <p id="loginError" class="error-text" aria-live="polite"></p>
+      <div class="login-actions">
+        <button id="buyAccessButton" type="button" class="ghost-button">Probar programa</button>
+        <button id="licenseButton" type="button" class="ghost-button">Comprar licencia</button>
+        <button type="submit" class="gold-button">Entrar</button>
       </div>
     </form>
-  </section>
+  </div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const adminOpenBtn = document.getElementById("adminOpenBtn");
-    const playOpenBtn = document.getElementById("playOpenBtn");
-    const adminModal = document.getElementById("adminModal");
-    const playerModal = document.getElementById("playerModal");
-    const adminForm = document.getElementById("adminForm");
-    const playerForm = document.getElementById("playerForm");
-    const adminNickname = document.getElementById("adminNickname");
-    const adminCode = document.getElementById("adminCode");
-    const playerNickname = document.getElementById("playerNickname");
-    const playerCode = document.getElementById("playerCode");
-    const menuView = document.getElementById("menuView");
-    const appView = document.getElementById("appView");
-    const statusEl = document.getElementById("status");
-    const adminPanel = document.getElementById("adminPanel");
-    const codeGrid = document.getElementById("codeGrid");
-    const adminUsers = document.getElementById("adminUsers");
-    const startRoundBtn = document.getElementById("startRoundBtn");
-    const spinBtn = document.getElementById("spinBtn");
-    const muteBtn = document.getElementById("muteBtn");
-    const enableChatBtn = document.getElementById("enableChatBtn");
-    const roulette = document.getElementById("roulette");
-    const winnerChip = document.getElementById("winnerChip");
-    const playersAround = document.getElementById("playersAround");
-    const meBottom = document.getElementById("meBottom");
-    const chatLog = document.getElementById("chatLog");
-    const chatForm = document.getElementById("chatForm");
-    const chatMessage = document.getElementById("chatMessage");
+  <div id="buyAccessModal" class="modal-backdrop locked" role="dialog" aria-modal="true" aria-labelledby="buyAccessTitle">
+    <form id="buyAccessForm" class="feedback-modal login-modal-card glass-card">
+      <h2 id="buyAccessTitle">Comprar cuenta de acceso</h2>
+      <label for="buyNameInput">Nombre</label>
+      <input id="buyNameInput" type="text" autocomplete="name" required>
 
-    let myId = null;
-    let myRole = null;
-    let latestState = null;
-    let rotation = 0;
+      <label for="buyContactInput">Correo o WhatsApp</label>
+      <input id="buyContactInput" type="text" autocomplete="email" required>
 
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
+      <p id="buyAccessError" class="error-text" aria-live="polite"></p>
+      <div class="button-row">
+        <button id="buyAccessBackButton" type="button" class="ghost-button">Volver</button>
+        <button type="submit" class="gold-button">Solicitar acceso</button>
+      </div>
+    </form>
+  </div>
 
-    function openModal(modal) { modal.classList.remove("hidden"); }
-    function closeModals() {
-      adminModal.classList.add("hidden");
-      playerModal.classList.add("hidden");
-    }
+  <div id="profileModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+    <form id="profileForm" class="feedback-modal glass-card">
+      <h2 id="profileTitle">Mi sesión</h2>
+      <label for="profileNameInput">Usuario</label>
+      <input id="profileNameInput" type="text" maxlength="40" autocomplete="name" readonly>
 
-    adminOpenBtn.addEventListener("click", () => openModal(adminModal));
-    playOpenBtn.addEventListener("click", () => openModal(playerModal));
-    document.querySelectorAll(".close-modal").forEach((button) => button.addEventListener("click", closeModals));
+      <label for="profileKeyInput">Clave</label>
+      <input id="profileKeyInput" type="text" minlength="5" maxlength="12" autocomplete="off" readonly>
+      <p id="profileError" class="error-text" aria-live="polite"></p>
 
-    adminForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      socket.emit("adminLogin", { code: adminCode.value, nickname: adminNickname.value });
-    });
+      <div class="button-row">
+        <button id="logoutButton" type="button" class="ghost-button">Cerrar sesión</button>
+        <button id="profileCloseButton" type="button" class="ghost-button">Cancelar</button>
+      </div>
+    </form>
+  </div>
 
-    playerForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      socket.emit("playerJoin", { code: playerCode.value, nickname: playerNickname.value });
-    });
+  <div id="licenseInfoModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="licenseInfoTitle">
+    <div class="feedback-modal login-modal-card glass-card">
+      <h2 id="licenseInfoTitle">Solicitud recibida</h2>
+      <p>Nos pondremos en contacto contigo para que puedas comprar tu licencia.</p>
+      <p>Tienes acceso a 5 minutos de prueba.</p>
+      <div class="button-row">
+        <button id="licenseInfoCloseButton" type="button" class="gold-button">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
-    startRoundBtn.addEventListener("click", () => socket.emit("adminStartRound"));
-    spinBtn.addEventListener("click", () => socket.emit("adminSpin"));
-    muteBtn.addEventListener("click", () => socket.emit("adminSetChat", false));
-    enableChatBtn.addEventListener("click", () => socket.emit("adminSetChat", true));
+  <div id="trialOverlay" class="trial-overlay">
+    <div class="trial-label">
+      <p>Modo de prueba</p>
+    </div>
+    <div class="trial-countdown">
+      <span id="trialTimer">05:00</span>
+      <button id="endTrialButton" type="button">Cerrar prueba</button>
+    </div>
+  </div>
 
-    adminUsers.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-kick]");
-      if (button) socket.emit("adminKick", button.dataset.kick);
-    });
+  <div id="betaBadge" class="beta-badge">
+    <p>Usuario beta</p>
+    <span>Versión de prueba</span>
+  </div>
 
-    chatForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      socket.emit("chatMessage", chatMessage.value);
-      chatMessage.value = "";
-    });
+  <div id="toastMessage" class="toast-message" role="status" aria-live="polite"></div>
 
-    socket.on("sessionAssigned", ({ id, role }) => {
-      myId = id;
-      myRole = role;
-      closeModals();
-      menuView.classList.add("hidden");
-      appView.classList.remove("hidden");
-      adminPanel.classList.toggle("active", role === "admin");
-    });
-
-    socket.on("adminState", ({ accessCodes, players, chatEnabled }) => {
-      codeGrid.innerHTML = accessCodes.map((item) => `
-        <div class="code-box">
-          <small>Código ${item.slot}</small>
-          <strong>${item.code}</strong>
-          <small>${item.usedBy ? "Usado" : "Libre"}</small>
-        </div>
-      `).join("");
-      adminUsers.innerHTML = players.length
-        ? players.map((player) => `
-          <div class="user-admin-row">
-            <strong>${escapeHtml(player.nickname)}</strong>
-            <small>${player.choice || "Sin color"}</small>
-            <button class="danger" data-kick="${player.id}">Expulsar</button>
-          </div>
-        `).join("")
-        : '<div class="user-admin-row">Sin jugadores todavía</div>';
-      muteBtn.disabled = !chatEnabled;
-      enableChatBtn.disabled = chatEnabled;
-    });
-
-    socket.on("gameState", (state) => {
-      latestState = state;
-      render();
-    });
-
-    socket.on("errorMessage", (message) => {
-      statusEl.textContent = message;
-    });
-
-    socket.on("kicked", (message) => {
-      alert(message);
-      location.reload();
-    });
-
-    function render() {
-      if (!latestState) return;
-      statusEl.textContent = latestState.roundMessage + (latestState.adminName ? ` Admin: ${latestState.adminName}` : "");
-      chatForm.classList.toggle("hidden", !myRole);
-      chatMessage.disabled = myRole !== "admin" && !latestState.chatEnabled;
-
-      const winner = latestState.colors.find((color) => color.id === latestState.winningColor);
-      winnerChip.textContent = latestState.spinning ? "Girando..." : winner ? winner.label : "Sin giro";
-      if (latestState.spinning) {
-        rotation += 1080 + Math.floor(Math.random() * 360);
-        roulette.style.transform = `rotate(${rotation}deg)`;
-      } else if (winner) {
-        const index = latestState.colors.findIndex((color) => color.id === winner.id);
-        rotation += 360 - ((index * 60) + 30);
-        roulette.style.transform = `rotate(${rotation}deg)`;
-      }
-
-      renderPlayersAround();
-      renderMePanel();
-      renderChat();
-    }
-
-    function renderPlayersAround() {
-      const players = latestState.players;
-      playersAround.innerHTML = players.map((player, index) => {
-        const angle = (Math.PI * 2 * index / Math.max(players.length, 1)) - Math.PI / 2;
-        const radiusX = 39;
-        const radiusY = 36;
-        const left = 50 + Math.cos(angle) * radiusX;
-        const top = 45 + Math.sin(angle) * radiusY;
-        const color = latestState.colors.find((item) => item.id === player.choice);
-        return `
-          <div class="player-node ${player.id === myId ? "me" : ""}" style="left:${left}%;top:${top}%">
-            <div>${escapeHtml(player.nickname)}</div>
-            <small>${color ? color.label : "Sin elegir"}</small>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function renderMePanel() {
-      const me = latestState.players.find((player) => player.id === myId);
-      if (!me) {
-        meBottom.classList.toggle("hidden", myRole !== "admin");
-        meBottom.innerHTML = myRole === "admin" ? `<strong>${escapeHtml(latestState.adminName || "Admin")}</strong><div>Controlando la ruleta</div>` : "";
-        return;
-      }
-      const canChoose = latestState.roundActive && !latestState.spinning && !latestState.winningColor;
-      meBottom.classList.remove("hidden");
-      meBottom.innerHTML = `
-        <strong>${escapeHtml(me.nickname)}</strong>
-        <div>Tu color: ${latestState.colors.find((color) => color.id === me.choice)?.label || "sin elegir"}</div>
-        <div class="colors">
-          ${latestState.colors.map((color) => `
-            <button class="color-btn" style="background:${color.hex}" ${canChoose ? "" : "disabled"} onclick="chooseColor('${color.id}')">${color.label}</button>
-          `).join("")}
-        </div>
-      `;
-    }
-
-    function renderChat() {
-      chatLog.innerHTML = latestState.chat.length
-        ? latestState.chat.map((item) => `
-          <div class="chat-row ${item.system ? "system" : ""}">
-            <small>${item.time} - ${escapeHtml(item.sender)}</small>
-            <div>${escapeHtml(item.message)}</div>
-          </div>
-        `).join("")
-        : '<div class="chat-row system">El chat grupal aparecerá aquí.</div>';
-    }
-
-    function chooseColor(colorId) {
-      socket.emit("chooseColor", colorId);
-    }
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
